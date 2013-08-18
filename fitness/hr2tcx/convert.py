@@ -7,10 +7,7 @@ from optparse import OptionParser
 import datetime
 
 start_point = (-122.5206524, 37.5941942)
-meters_per_degree = (11647.0/180.0)*1000 # 88.133
 degrees_per_meter = 0.01135/1000
-
-print >> sys.stderr, degrees_per_meter
 
 def pointAsXmlByDistance(meters):
   return """
@@ -26,7 +23,6 @@ def parseSegment(s, coef):
     raise RuntimeError("Invalid format")
   s[1] = float(s[1])*coef/3.6 # meters per second
   s[0] = int(s[0])
-  #print s
   return s
 
 def printHeader():
