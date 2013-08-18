@@ -6,6 +6,20 @@ import getopt
 from optparse import OptionParser
 import datetime
 
+start_point = (-122.5206524, 37.5941942)
+meters_per_degree = (11647.0/180.0)*1000 # 88.133
+degrees_per_meter = 0.01135/1000
+
+print >> sys.stderr, degrees_per_meter
+
+def pointAsXmlByDistance(meters):
+  return """
+    <Position>
+        <LongitudeDegrees>%.12f</LongitudeDegrees>
+        <LatitudeDegrees>%.12f</LatitudeDegrees>
+    </Position>
+    """ % (start_point[0] - meters*degrees_per_meter, start_point[1])
+
 def parseSegment(s, coef):
   s = s.split('@')
   if (len(s) > 2):
@@ -105,9 +119,11 @@ def main():
           break
         else:
           del segments[0]
-      print "  <DistanceMeters>%f</DistanceMeters>" % distance
+      #print "  <DistanceMeters>%f</DistanceMeters>" % distance
+      print pointAsXmlByDistance(distance)
     else:
-      print "  <DistanceMeters>0.0000000</DistanceMeters>"
+      #print "  <DistanceMeters>0.0000000</DistanceMeters>"
+      print pointAsXmlByDistance(0)
 
     lastTs = timestamp
     print "  <HeartRateBpm><Value>" + hr + "</Value></HeartRateBpm>"
