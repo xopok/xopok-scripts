@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Usage example:
+# shrinkpdf.sh /output/directory/ sourcefile-in-current-directory.pdf
+
 TMPFILE=/dev/shm/pdfshrink.pdf
 rm $TMPFILE
 
