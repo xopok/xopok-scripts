@@ -37,6 +37,8 @@ def main():
                   dest="starttime",
                   help="Override start time")
 
+  # Usage: convert.py -i 300@5.6 240@8.4 240@5.6 240@8.4 1000000@5.6 < in.txt > out.tcx
+
   (options, args) = parser.parse_args()
 
   coef = 1.0
