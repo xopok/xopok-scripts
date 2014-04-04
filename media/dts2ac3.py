@@ -35,26 +35,14 @@ def main():
         sys.exit(1)
 
     p = subprocess.Popen(['mkvinfo', '-s', infile], stdout=subprocess.PIPE)
-    #mi = p.communicate()
-
-    """ mkvinfo -s will give something like this:
-Track 1: video, codec ID: V_MPEG4/ISO/AVC (h.264 profile: High @L4.1), mkvmerge/mkvextract track ID: 0, default duration: 41.708ms (23.976 frames/fields per second for a video track), language: spa, pixel width: 1280, pixel height: 544, display width: 1280, display height: 544
-Track 2: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 1, default duration: 32.000ms (31.250 frames/fields per second for a video track), language: rus, sampling freq: 48000, channels: 6
-Track 3: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 2, default duration: 32.000ms (31.250 frames/fields per second for a video track), language: rus, sampling freq: 48000, channels: 6
-Track 4: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 3, default duration: 32.000ms (31.250 frames/fields per second for a video track), language: rus, sampling freq: 48000, channels: 6
-Track 5: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 4, default duration: 32.000ms (31.250 frames/fields per second for a video track), language: spa, sampling freq: 48000, channels: 6
-    """
-    # x = xmldom.parseString(mi[0])
 
     tracksToConvert = []
     tracksToCopy = []
 
-    #time.sleep(100000000)
-
+    # TODO: preserve track's language
     for line in p.stdout.xreadlines():
       if line.startswith("Track"):
         r = re.search("Track [0-9]+: ([^,]+), codec ID: ([^,]+), mkvmerge[^0-9]+([0-9]+),.*", line)
-        #print r.groups()
         if r and r.groups()[0] == 'audio':
           id = r.groups()[2]
           if r.groups()[1] != 'A_DTS':
@@ -62,7 +50,6 @@ Track 5: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 4, default durati
           else:
             tracksToConvert.append(id)
       else:
-        # stop reading
         p.kill()
         p.wait()
         break
@@ -136,6 +123,7 @@ Track 5: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 4, default durati
     out = p_merge.communicate()
     if p_merge.returncode != 0:
         print "Merge failed: [%s], [%s]" % (out[0], out[1])
+        return 1
 
     print "Ok"
     return 0
