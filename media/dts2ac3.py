@@ -2,6 +2,8 @@
 
 import os
 import sys
+import re
+import time
 import subprocess
 import tempfile
 import xml.dom.minidom as xmldom
@@ -32,27 +34,38 @@ def main():
         print "%s not exists" % infile
         sys.exit(1)
 
-    p = subprocess.Popen(['mediainfo', '--output=xml', infile], stdout=subprocess.PIPE)
-    mi = p.communicate()
+    p = subprocess.Popen(['mkvinfo', '-s', infile], stdout=subprocess.PIPE)
+    #mi = p.communicate()
 
-    x = xmldom.parseString(mi[0])
+    """ mkvinfo -s will give something like this:
+Track 1: video, codec ID: V_MPEG4/ISO/AVC (h.264 profile: High @L4.1), mkvmerge/mkvextract track ID: 0, default duration: 41.708ms (23.976 frames/fields per second for a video track), language: spa, pixel width: 1280, pixel height: 544, display width: 1280, display height: 544
+Track 2: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 1, default duration: 32.000ms (31.250 frames/fields per second for a video track), language: rus, sampling freq: 48000, channels: 6
+Track 3: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 2, default duration: 32.000ms (31.250 frames/fields per second for a video track), language: rus, sampling freq: 48000, channels: 6
+Track 4: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 3, default duration: 32.000ms (31.250 frames/fields per second for a video track), language: rus, sampling freq: 48000, channels: 6
+Track 5: audio, codec ID: A_AC3, mkvmerge/mkvextract track ID: 4, default duration: 32.000ms (31.250 frames/fields per second for a video track), language: spa, sampling freq: 48000, channels: 6
+    """
+    # x = xmldom.parseString(mi[0])
 
     tracksToConvert = []
-    tracks = x.getElementsByTagName("Mediainfo")[0].getElementsByTagName("File")[0].getElementsByTagName("track")
     tracksToCopy = []
 
-    for t in tracks:
-        isAudio = False
-        for i in range(t.attributes.length):
-            if (t.attributes.item(i).name, t.attributes.item(i).value) == ('type', 'Audio'):
-                isAudio = True
-        if isAudio:
-            codecId = GetText(t.getElementsByTagName('Codec_ID')[0])
-            id = str(GetText(t.getElementsByTagName('ID')[0]))
-            if codecId == "A_DTS":
-                tracksToConvert.append(id)
-            else:
-                tracksToCopy.append(id)
+    #time.sleep(100000000)
+
+    for line in p.stdout.xreadlines():
+      if line.startswith("Track"):
+        r = re.search("Track [0-9]+: ([^,]+), codec ID: ([^,]+), mkvmerge[^0-9]+([0-9]+),.*", line)
+        #print r.groups()
+        if r and r.groups()[0] == 'audio':
+          id = r.groups()[2]
+          if r.groups()[1] != 'A_DTS':
+            tracksToCopy.append(id)
+          else:
+            tracksToConvert.append(id)
+      else:
+        # stop reading
+        p.kill()
+        p.wait()
+        break
 
     if not tracksToConvert:
         print "Nothing to convert"
@@ -90,20 +103,20 @@ def main():
         else:
             p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=devnull)
             p1 = subprocess.Popen(['bash', '-c', 'cat > %s' % ac3], stdin = p.stdout)
-            convs.append(p1)
-        convs.append(p)
+            convs.append((p1, None))
+        convs.append((p, cmdline))
 
     # Wait for extract and convert
     if not ac3fifo:
         out_e = p_extract.communicate()
         if p_extract.returncode != 0:
-            print "Extract failed, %s" % out_e
+            print "Extract failed, %s" % str(out_e)
             return 2
         
-        for i in convs:
+        for i, cmdline in convs:
             out = i.communicate()
             if i.returncode != 0:
-                print "Convert failed, %s" % out
+                print "Convert (%s) failed, %s" % (str(cmdline), str(out))
                 return 3
 
     # Merger
@@ -129,11 +142,11 @@ def main():
 
 if __name__ == '__main__':
     res = 1
-    try:
-        res = main()
-    except Exception, e:
-        print e
-        pass
+    #try:
+    res = main()
+    #except Exception, e:
+    #    print e
+    #    pass
     for i in filesToDelete:
         try:
             os.unlink(i)    
