@@ -130,7 +130,7 @@ if [ ! -f "${TEMPRRD}" ]
 		CreateRRD "${TEMPRRD}" "temp"
 fi
 
-MAINLEVEL=`/home/pi/co2/k30.py -t 5`
+MAINLEVEL=`/home/pi/co2/k30.py -t 3`
 MAINTEMP=`cat /sys/bus/w1/devices/28-0000065cf907/w1_slave | grep "t=" | sed "s/.*t=//"`
 MAINTEMP=`python -c "print $MAINTEMP / 1000.0"`
 UUID=`cat /home/pi/co2/uuid`
@@ -138,9 +138,6 @@ UUID=`cat /home/pi/co2/uuid`
 # Save level for led daemon
 echo "$MAINLEVEL" > $MAINLEVELFILE
 echo "$MAINTEMP" #> $MAINTEMPFILE
-
-# Now upload the value to the server
-wget --timeout=15 --no-check-certificate "https://co2.accosto.com:8443" --post-data "uuid=$UUID&co2=$MAINLEVEL" -O /dev/null
 
 # Create dash page
 CreateHTML "${RRDIMG}/index.html" dash "${MAINLEVEL}" "${MAINTEMP}"
@@ -241,6 +238,8 @@ CreateGraph "${RRDIMG}/mainyear.svg" 31536000 "${MAINRRD}" "${TEMPRRD}" "Year@${
 #echo "Yearly Graphs Created...."
 fi
 
+# Now upload the value to the server
+wget --timeout=15 --no-check-certificate "https://co2.accosto.com:8443" --post-data "uuid=$UUID&co2=$MAINLEVEL" -O /dev/null
 
 #echo " <------------------------------------------------------------->"
 #echo " "
