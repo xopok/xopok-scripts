@@ -2,7 +2,6 @@
 
 import RPi.GPIO as GPIO
 import time
-import math
 
 GPIO.setmode(GPIO.BCM)
 
@@ -10,37 +9,39 @@ ledRed = 16
 ledGreen = 20
 levelFile = "/dev/shm/co2level"
 
-streetLevel = 400
-lowLevel = 425
-highLevel = 700
-higherLevel = 1000
-veryhighLevel = 1500
-blinkStep = 100
+patterns = [
+  [(0, 400),     ledGreen, (3000, 2, 250, 2, 250, 2, 250, 2)],
+  [(400, 500),   ledGreen, (3000, 2, 250, 2, 250, 2)],
+  [(500, 600),   ledGreen, (3000, 2, 250, 2)],
+  [(600, 700),   ledGreen, (3000, 2)],
+  [(700, 800),   ledRed,   (1000, 50)],
+  [(800, 900),   ledRed,   (1000, 50, 200, 50)],
+  [(900, 1000),  ledRed,   (1000, 50, 200, 50, 200, 50)],
+  [(1000, 1200), ledRed,   (1500, 50, 200, 50, 200, 50, 200, 50)],
+  [(1200, 1500), ledRed,   (1500, 50, 200, 50, 200, 50, 200, 50, 200, 50)],
+  [(1500, 2000), ledRed,   (4000, 300, 200, 300, 200, 300, 200, 300, 200, 300, 200, 300)],
+  [(2000, 5000), ledRed,   (4000, 300, 200, 300, 200, 300, 200, 300, 200, 300, 200, 300, 200, 300)],
+  [(5000, 9999), ledRed,   (500, 50, 100, 250)],
+]
 
 GPIO.setup(ledRed, GPIO.OUT)
 GPIO.setup(ledGreen, GPIO.OUT)
 
-def blink(led, count, onDuration, offDuration, totalDuration):
+def blink(led, pattern):
   elapsed = 0
-  for i in xrange(count):
-    GPIO.output(led, GPIO.HIGH)
-    time.sleep(onDuration)
-    GPIO.output(led, GPIO.LOW)
-    time.sleep(offDuration)
-    elapsed += onDuration + offDuration
-  if elapsed < totalDuration:
-    time.sleep(totalDuration - elapsed)
+  total, pulses = pattern[0], pattern[1:]
+  state = True
+  for i in pulses:
+    GPIO.output(led, GPIO.HIGH if state else GPIO.LOW)
+    time.sleep(i / 1000.0)
+    state = not state
+    elapsed += i
+  GPIO.output(led, GPIO.LOW)
+  if elapsed < total:
+    time.sleep((total - elapsed) / 1000.0)
 
-blink(ledGreen, 1, 0.002, 0.25, 1)
-blink(ledGreen, 2, 0.002, 0.25, 1)
-blink(ledGreen, 3, 0.002, 0.25, 1)
-blink(ledRed, 1, 0.05, 0.2, 1)
-blink(ledRed, 2, 0.05, 0.2, 1)
-blink(ledRed, 3, 0.05, 0.2, 1)
-blink(ledRed, 1, 0.3, 0.2, 2)
-blink(ledRed, 2, 0.3, 0.2, 2)
-blink(ledRed, 3, 0.3, 0.2, 2)
-blink(ledRed, 4, 0.3, 0.2, 2)
+for (level_range, led, pattern) in patterns:
+  blink(led, pattern)
 
 while True:
   try:
@@ -49,49 +50,18 @@ while True:
     intLevel = int(level)
   except:
     intLevel = -1
+    blink(ledGreen, (500, 500))
+    blink(ledRed, (1500, 500))
+    continue
 
+  blinked = False
+  for (level_range, led, pattern) in patterns:
+    if (level_range[0] < intLevel <= level_range[1]):
+      blink(led, pattern)
+      blinked = True
+  if not blinked:
+    level_range, led, pattern = patterns[-1]
+    blink(led, pattern)
 
-  if intLevel >= higherLevel:
-    total = 2
-    led = ledRed
-    diff = intLevel - higherLevel
-    onDuration = 0.3
-    offDuration = 0.2
-  elif intLevel >= highLevel:
-    total = 1
-    led = ledRed
-    diff = intLevel - highLevel
-    onDuration = 0.05
-    offDuration = 0.2
-  else:
-    total = 3
-    led = ledGreen
-    diff = highLevel - intLevel
-    onDuration = 0.002
-    offDuration = 0.25
-    
-  count = int(math.ceil(float(diff) / blinkStep))
-  if count == 0:
-    count = 1
-
-  blink(led, count, onDuration, offDuration, total)
-
-  """
-    ratio = float(intLevel - highLevel) / (veryhighLevel - highLevel)
-    if ratio > 1:
-      ratio = 1
-    if ratio < 0.05:
-      ratio = 0.05
-    blink(ledRed, 1, ratio, 0, 1)
-  elif intLevel < lowLevel: 
-    ratio = float(lowLevel - intLevel) / (lowLevel - streetLevel)
-    if ratio > 0.1:
-      ratio = 0.1
-    if ratio < 0.02:
-      ratio = 0.02
-    blink(ledGreen, 1, ratio, 0, 3)
-  else:
-    time.sleep(10)
-  """
 
 GPIO.cleanup() 
