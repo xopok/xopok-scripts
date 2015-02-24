@@ -18,6 +18,9 @@ RRDIMG=/dev/shm/rrd.img
 
 # For led daemon
 MAINLEVELFILE=/dev/shm/co2level
+HUMLEVELFILE=/dev/shm/humlevel
+TEMPLEVELFILE=/dev/shm/templevel
+TEMPINTLEVELFILE=/dev/shm/tempintlevel
 
 # Restore rrd db from backup if necessary
 [ -d $RRDDATA ] || cp -a $RRDBACKUP $RRDDATA
@@ -98,6 +101,8 @@ CO2MAIN=main
 
 MAINRRD="${RRDDATA}/${CO2MAIN}.rrd"
 TEMPRRD="${RRDDATA}/temperature.rrd"
+HUMRRD="${RRDDATA}/humidity.rrd"
+TEMPINTRRD="${RRDDATA}/temperature_int.rrd"
 
 CreateRRD ()
 {	
@@ -129,15 +134,30 @@ if [ ! -f "${TEMPRRD}" ]
 		echo "RRD file : ${TEMPRRD} does not exist. Creating Now..."
 		CreateRRD "${TEMPRRD}" "temp"
 fi
+if [ ! -f "${HUMRRD}" ]
+	then
+		echo "RRD file : ${HUMRRD} does not exist. Creating Now..."
+		CreateRRD "${HUMRRD}" "humidity"
+fi
+if [ ! -f "${TEMPINTRRD}" ]
+	then
+		echo "RRD file : ${TEMPINTRRD} does not exist. Creating Now..."
+		CreateRRD "${TEMPINTRRD}" "tempint"
+fi
 
 MAINLEVEL=`/home/pi/co2/k30.py -t 3`
+HUMTEMPLEVEL=`/home/pi/co2/dht.py 24 5`
+HUMLEVEL=`echo $HUMTEMPLEVEL | sed "s/,.*//"`
+TEMPINTLEVEL=`echo $HUMTEMPLEVEL | sed "s/.*,//"`
 MAINTEMP=`cat /sys/bus/w1/devices/28-0000065cf907/w1_slave | grep "t=" | sed "s/.*t=//"`
 MAINTEMP=`python -c "print $MAINTEMP / 1000.0"`
 UUID=`cat /home/pi/co2/uuid`
 
 # Save level for led daemon
 echo "$MAINLEVEL" > $MAINLEVELFILE
-echo "$MAINTEMP" #> $MAINTEMPFILE
+echo "$MAINTEMP" > $TEMPLEVELFILE
+echo "$HUMLEVEL" > $HUMLEVELFILE
+echo "$TEMPINTLEVEL" > $TEMPINTLEVELFILE
 
 # Create dash page
 CreateHTML "${RRDIMG}/index.html" dash "${MAINLEVEL}" "${MAINTEMP}"
@@ -148,17 +168,23 @@ CreateHTML "${RRDIMG}/index.html" dash "${MAINLEVEL}" "${MAINTEMP}"
 # Update the Databases
 `rrdupdate "${MAINRRD}" -t co2 N:"${MAINLEVEL}"`
 `rrdupdate "${TEMPRRD}" -t temp N:"${MAINTEMP}"`
+`rrdupdate "${TEMPINTRRD}" -t tempint N:"${TEMPINTLEVEL}"`
+`rrdupdate "${HUMRRD}" -t humidity N:"${HUMLEVEL}"`
 
-# $1 = ImageFile , $2 = Time in secs to go back , $3 = RRDfil , $5 = GraphText , $6 width, $7 height, $8 add options
+# $1 = ImageFile , $2 = Time in secs to go back , $3 = RRDfile, $4, $5, $6 - rrdfiles, $7 = GraphText , $8 width, $9 height, $10 add options
 CreateGraph ()
 {
-  rrdtool graph "${1}.new" --slope-mode -a SVG -s -"${2}" -w $6 -h $7 -D --units-exponent 0 -v "ppm" $8 \
+  rrdtool graph "${1}.new" --slope-mode -a SVG -s -"${2}" -w $8 -h $9 -D --units-exponent 0 -v "ppm" $10 \
   --right-axis 0.05:0 --right-axis-label "Temp" --right-axis-format "%1.0lf" \
   'DEF:ds1='${3}':co2:AVERAGE' \
   'DEF:ds2='${3}':co2:MAX' \
   'DEF:ds3='${3}':co2:MIN' \
   'DEF:ds4='${4}':temp:AVERAGE' \
+  'DEF:ds5='${5}':tempint:AVERAGE' \
+  'DEF:ds6='${6}':humidity:AVERAGE' \
   'CDEF:scaled_ds4=ds4,20,*' \
+  'CDEF:scaled_ds5=ds5,20,*' \
+  'CDEF:scaled_ds6=ds6,10,*' \
   'HRULE:2500#FF3300:Drowsiness' \
   'HRULE:5000#FF0000:Maximum' \
   'AREA:1000#FFDB94:Stiffness' \
@@ -166,6 +192,8 @@ CreateGraph ()
   'AREA:400#C2F0C2:Fresh' \
   'LINE1:ds2#FF8080:Max CO2' \
   'LINE1:scaled_ds4#000000:Temp' \
+  'LINE1:scaled_ds5#303030:TempInt' \
+  'LINE1:scaled_ds6#00ACCF:Humidity' \
   GPRINT:ds2:MAX:"Max %4.0lf" \
   GPRINT:ds2:MIN:"Min %4.0lf" \
   'LINE1:ds3#80AF80:Min CO2' \
@@ -176,11 +204,11 @@ CreateGraph ()
   GPRINT:ds1:MIN:"Min %4.0lf" \
   GPRINT:ds1:AVERAGE:"Avg %4.0lf" \
   GPRINT:ds1:LAST:"Curr %4.0lf" \
-  -t "${5}"
+  -t "${7}"
   mv -f "${1}.new" "${1}"
 }
 
-# $1 = ImageFile , $2 = Time in secs to go back , $3 = RRDfil , $4 = GraphText 
+# $1 = ImageFile , $2 = Time in secs to go back , $3 = RRDfil , $7 = GraphText 
 CreateDashGraph ()
 {
   rrdtool graph "${1}.new" --slope-mode -a SVG -s -"${2}" -w 710 -h 550 -D --units-exponent 0 -v "ppm" \
@@ -189,20 +217,28 @@ CreateDashGraph ()
   'DEF:ds2='${3}':co2:MAX' \
   'DEF:ds3='${3}':co2:MIN' \
   'DEF:ds4='${4}':temp:AVERAGE' \
+  'DEF:ds5='${5}':tempint:AVERAGE' \
+  'DEF:ds6='${6}':humidity:AVERAGE' \
   'CDEF:scaled_ds4=ds4,20,*' \
+  'CDEF:scaled_ds5=ds5,20,*' \
+  'CDEF:scaled_ds6=ds6,10,*' \
   'AREA:1000#FFDB94:Stiffness' \
   'AREA:700#E6FFB2:Safe' \
   'AREA:400#C2F0C2:Fresh' \
   'LINE2:ds1#0000FF:CO2' \
   'LINE2:scaled_ds4#000000:Temp' \
+  'LINE1:scaled_ds5#303030:TempInt' \
+  'LINE2:scaled_ds6#00ACCF:Humidity' \
   GPRINT:ds1:MAX:"Max %4.0lf" \
   GPRINT:ds1:MIN:"Min %4.0lf" \
   GPRINT:ds1:LAST:"Curr %4.0lf" \
   GPRINT:ds4:LAST:"Temp %2.1lf" \
-  -t "${5}"
+  GPRINT:ds5:LAST:"TempInt %2.1lf" \
+  GPRINT:ds6:LAST:"Humidity %2.1lf" \
+  -t "${7}"
   mv -f "${1}.new" "${1}"
 
-  CreateGraph "${RRDIMG}/dashday.svg" 86400 "${MAINRRD}" "${TEMPRRD}" "Day@${DAYTIME}" 710 160 --no-legend
+  CreateGraph "${RRDIMG}/dashday.svg" 86400 "${MAINRRD}" "${TEMPRRD}" "${TEMPINTRRD}" "${HUMRRD}" "Day@${DAYTIME}" 710 160 --no-legend
 }
 
 # Update Daily graphs every 10 mins 
@@ -212,10 +248,10 @@ CreateDashGraph ()
 #if [ "${MTIME}" = 00 ] || [ "${MTIME}" = 30 ];
 #then
 # 1 Day Graph
-CreateDashGraph "${RRDIMG}/maindash.svg" 14400 "${MAINRRD}" "${TEMPRRD}" "4Hours@${DAYTIME}"
+CreateDashGraph "${RRDIMG}/maindash.svg" 14400 "${MAINRRD}" "${TEMPRRD}" "${TEMPINTRRD}" "${HUMRRD}" "4Hours@${DAYTIME}"
 #echo "Dash Graphs created....."
 
-CreateGraph "${RRDIMG}/mainday.svg" 86400 "${MAINRRD}" "${TEMPRRD}" "Day@${DAYTIME}" 1280 480
+CreateGraph "${RRDIMG}/mainday.svg" 86400 "${MAINRRD}" "${TEMPRRD}" "${TEMPINTRRD}" "${HUMRRD}" "Day@${DAYTIME}" 1280 480
 #echo "Daily Graphs created....."
 #fi
 
@@ -223,7 +259,7 @@ CreateGraph "${RRDIMG}/mainday.svg" 86400 "${MAINRRD}" "${TEMPRRD}" "Day@${DAYTI
 if [ "${MTIME}" = 00 ] || [ "${MTIME}" = 30 ] || [ ! -f "${RRDIMG}/mainweek.svg" ];
 then
 # 1 Week Graph
-CreateGraph "${RRDIMG}/mainweek.svg" 604800 "${MAINRRD}" "${TEMPRRD}" "Week@${DAYTIME}" 1280 480
+CreateGraph "${RRDIMG}/mainweek.svg" 604800 "${MAINRRD}" "${TEMPRRD}" "${TEMPINTRRD}" "${HUMRRD}" "Week@${DAYTIME}" 1280 480
 #echo "Weekly Graphs created....."
 fi
 
@@ -231,10 +267,10 @@ fi
 if [ "${HTIME}" = 04 ] && [ "${MTIME}" = 00 ] || [ ! -f "${RRDIMG}/mainmonth.svg" ];
 then
 # 1 Month Graph
-CreateGraph "${RRDIMG}/mainmonth.svg" 2678400 "${MAINRRD}" "${TEMPRRD}" "Month@${DAYTIME}" 1280 480
+CreateGraph "${RRDIMG}/mainmonth.svg" 2678400 "${MAINRRD}" "${TEMPRRD}" "${TEMPINTRRD}" "${HUMRRD}" "Month@${DAYTIME}" 1280 480
 #echo "Monthly Graphs Created...."
 # 1 Year Graph
-CreateGraph "${RRDIMG}/mainyear.svg" 31536000 "${MAINRRD}" "${TEMPRRD}" "Year@${DAYTIME}" 1280 480
+CreateGraph "${RRDIMG}/mainyear.svg" 31536000 "${MAINRRD}" "${TEMPRRD}" "${TEMPINTRRD}" "${HUMRRD}" "Year@${DAYTIME}" 1280 480
 #echo "Yearly Graphs Created...."
 fi
 
