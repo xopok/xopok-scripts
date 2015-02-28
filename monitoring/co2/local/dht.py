@@ -15,21 +15,21 @@ if len(sys.argv) >= 2:
 else:
 	sys.exit(1)
 
-humiditySum = 0
-tempSum = 0
+humidities = []
+temps = []
 samplesDone = 0
 
 while samplesDone < samples:
   humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, pin)
   if humidity is not None and temperature is not None:
-    humiditySum += humidity
-    tempSum += temperature
+    humidities += [ humidity ]
+    temps += [ temperature ]
     samplesDone += 1
   else:
     print >> sys.stderr, 'Failed to get reading. Try again'
 
-humidity = humiditySum / samplesDone
-temperature = tempSum / samplesDone  
+humidity = humidities[(samples / 2)]
+temperature = temps[int(samples / 2)]  
 print '{1:0.1f},{0:0.1f}'.format(temperature, humidity)
 
 sys.exit(0)
