@@ -1,0 +1,2 @@
+#!/bin/sh                                                                                                                                                                                                                                                 
+/var/lib/rrd/rrdtool.sh $1 # >> /dev/shm/rrdtool.log 2>&1
