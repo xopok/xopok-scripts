@@ -24,11 +24,14 @@ filesToDelete = []
 
 def main():
     if len(sys.argv) < 3:
-        print "Usage: %s infile outfile" % sys.argv[0]
+        print "Usage: %s infile outfile [format]" % sys.argv[0]
         sys.exit(1)
 
     infile = sys.argv[1]
     outfile = sys.argv[2]
+    fmt = 'ac3'
+    if len(sys.argv) >= 4:
+      fmt = sys.argv[3]
 
     if not os.path.exists(infile):
         print "%s not exists" % infile
@@ -45,7 +48,10 @@ def main():
         r = re.search("Track [0-9]+: ([^,]+), codec ID: ([^,]+), mkvmerge[^0-9]+([0-9]+),.*", line)
         if r and r.groups()[0] == 'audio':
           id = r.groups()[2]
-          if r.groups()[1] != 'A_DTS':
+          srcfmt = ['A_DTS']
+          if fmt == 'mp3':
+            srcfmt = ['A_DTS', 'A_AAC', 'A_AC3']
+          if not r.groups()[1] in srcfmt:
             tracksToCopy.append(id)
           else:
             tracksToConvert.append(id)
@@ -63,9 +69,9 @@ def main():
     for i in tracksToConvert:
         dts = CreateFifo(suffix='.dts')
         if ac3fifo:
-            ac3 = CreateFifo(suffix='.ac3')
+            ac3 = CreateFifo(suffix='.'+fmt)
         else:
-            tfile, ac3 = tempfile.mkstemp(suffix='.ac3')
+            tfile, ac3 = tempfile.mkstemp(suffix='.'+fmt)
             os.close(tfile)
         filesToDelete.append(dts)
         filesToDelete.append(ac3)
@@ -83,7 +89,12 @@ def main():
     convs = []
     # Converters
     for id, dts, ac3 in tracks:
-        cmdline = ['ffmpeg', '-v', '3', '-y', '-i', dts, '-alang', 'rus', '-ab', '448k', '-ar', '48000', '-ac', '6', '-acodec', 'ac3', ac3]
+        #cmdline = ['ffmpeg', '-v', '3', '-y', '-i', dts, '-alang', 'rus', '-ab', '448k', '-ar', '48000', '-ac', '6', '-acodec', 'ac3', ac3]
+        cmdline = []
+        if fmt == 'ac3':
+          cmdline = ['avconv', '-threads', 'auto', '-y', '-i', dts, '-b', '448k', '-ar', '48000', '-q', '0', '-ac', '6', '-acodec', 'ac3', ac3]
+        else:
+          cmdline = ['avconv', '-threads', 'auto', '-y', '-i', dts, '-b', '256k', '-ar', '48000', '-q', '0', '-acodec', 'libmp3lame', ac3]
         print cmdline
         if not ac3fifo:
             p = subprocess.Popen(cmdline, stdout=devnull, stderr=devnull)
