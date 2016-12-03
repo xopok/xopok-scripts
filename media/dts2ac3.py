@@ -37,6 +37,10 @@ def main():
         print "%s not exists" % infile
         sys.exit(1)
 
+    if not os.access(os.path.dirname(os.path.realpath(outfile)), os.W_OK):
+        print "File \"%s\" could not be written" % os.path.realpath(outfile)
+        sys.exit(1)
+
     p = subprocess.Popen(['mkvinfo', '-s', infile], stdout=subprocess.PIPE)
 
     tracksToConvert = []
