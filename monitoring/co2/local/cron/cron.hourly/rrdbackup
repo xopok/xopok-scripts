@@ -3,4 +3,4 @@
 RRDDATA=/dev/shm/rrd.db
 RRDBACKUP=/var/lib/rrd/co2
 
-rsync -avx --delete $RRDDATA/ $RRDBACKUP/
+rsync -avxq --delete $RRDDATA/ $RRDBACKUP/

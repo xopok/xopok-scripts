@@ -113,7 +113,7 @@ HUMCONVRRD="${RRDDATA}/humidity_conv.rrd"
 CreateRRD ()
 {	
 	rrdtool create "${1}" --step=60 \
-	DS:${2}:GAUGE:120:0:10000 \
+	DS:${2}:GAUGE:120:-273:10000 \
 	RRA:AVERAGE:0.5:1:1440 \
 \
 	RRA:AVERAGE:0.5:10:1008 \
@@ -316,7 +316,8 @@ then
 CreateGraph "${RRDIMG}/mainmonth.svg" 2678400 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Month@${DAYTIME}" 1280 480
 #echo "Monthly Graphs Created...."
 # 1 Year Graph
-CreateGraph "${RRDIMG}/mainyear.svg" 31536000 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Year@${DAYTIME}" 1280 480
+#CreateGraph "${RRDIMG}/mainyear.svg" 31536000 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Year@${DAYTIME}" 1280 480
+CreateGraph "${RRDIMG}/mainyear.svg" 63072000 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Year@${DAYTIME}" 1280 480
 #echo "Yearly Graphs Created...."
 fi
 
@@ -325,3 +326,5 @@ wget --timeout=15 --no-check-certificate "https://co2.accosto.com:8443" --post-d
 
 #echo " <------------------------------------------------------------->"
 #echo " "
+
+exit 0
