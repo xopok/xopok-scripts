@@ -191,6 +191,21 @@ echo "$TEMPOUTLEVEL" > $TEMPOUTLEVELFILE
 # Create dash page
 CreateHTML "${RRDIMG}/index.html" dash "${MAINLEVEL}" "${MAINTEMP}"
 
+JSONFILE="${RRDIMG}/data.json"
+echo "{\n" \
+     " \"co2\": \"$MAINLEVEL\", \n" \
+     " \"T_in\": \"$TEMPINTLEVEL\", \n" \
+     " \"H_in\": \"$HUMLEVEL\", \n" \
+     " \"T_out\": \"$TEMPOUTLEVEL\", \n" \
+     " \"H_out\": \"$HUMOUTLEVEL\", \n" \
+     " \"H_conv\": \"$HUMCONVLEVEL\" \n}" > ${JSONFILE}_tmp
+echo "{\n" \
+     " \"co2\": \"$MAINLEVEL\", \n" \
+     " \"T in:out\": \"$TEMPINTLEVEL : $TEMPOUTLEVEL\", \n" \
+     " \"H in:out\": \"$HUMLEVEL : $HUMOUTLEVEL\", \n" \
+     " \"H conv\": \"$HUMCONVLEVEL\" \n}" > ${JSONFILE}_tmp
+mv -f ${JSONFILE}_tmp ${JSONFILE}
+
 # Debug
 #echo "MAIN sensor CO2 level : ${MAINLEVEL}"
 
@@ -310,14 +325,14 @@ CreateGraph "${RRDIMG}/mainweek.svg" 604800 "${MAINRRD}" "${HUMCONVRRD}" "${TEMP
 fi
 
 # Update  Monthly and Yearly graphs once a day (maybe twice a day on 12h settings) or if missing
-if [ "${HTIME}" = 04 ] && [ "${MTIME}" = 00 ] || [ ! -f "${RRDIMG}/mainmonth.svg" ];
+if [ "${HTIME}" = 04 ] && [ "${MTIME}" = 00 ] || [ ! -f "${RRDIMG}/mainmonth.svg" ] || [ ! -f "${RRDIMG}/mainyear.svg" ];
 then
 # 1 Month Graph
 CreateGraph "${RRDIMG}/mainmonth.svg" 2678400 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Month@${DAYTIME}" 1280 480
 #echo "Monthly Graphs Created...."
 # 1 Year Graph
-#CreateGraph "${RRDIMG}/mainyear.svg" 31536000 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Year@${DAYTIME}" 1280 480
-CreateGraph "${RRDIMG}/mainyear.svg" 63072000 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Year@${DAYTIME}" 1280 480
+CreateGraph "${RRDIMG}/mainyear.svg" 31536000 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Year@${DAYTIME}" 1280 480
+#CreateGraph "${RRDIMG}/mainyear.svg" 63072000 "${MAINRRD}" "${HUMCONVRRD}" "${TEMPINTRRD}" "${HUMRRD}" "${TEMPOUTRRD}" "${HUMOUTRRD}" "Year@${DAYTIME}" 1280 480
 #echo "Yearly Graphs Created...."
 fi
 
