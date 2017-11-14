@@ -200,10 +200,10 @@ echo "{\n" \
      " \"H_out\": \"$HUMOUTLEVEL\", \n" \
      " \"H_conv\": \"$HUMCONVLEVEL\" \n}" > ${JSONFILE}_tmp
 echo "{\n" \
-     " \"co2\": \"$MAINLEVEL\", \n" \
-     " \"T in:out\": \"$TEMPINTLEVEL : $TEMPOUTLEVEL\", \n" \
-     " \"H in:out\": \"$HUMLEVEL : $HUMOUTLEVEL\", \n" \
-     " \"H conv\": \"$HUMCONVLEVEL\" \n}" > ${JSONFILE}_tmp
+     " \"co2 ppm\": \"$MAINLEVEL\", \n" \
+     " \"T°C in-out\": \"$TEMPINTLEVEL  $TEMPOUTLEVEL\", \n" \
+     " \"H% in-out\": \"$HUMLEVEL  $HUMOUTLEVEL\", \n" \
+     " \"H% conv\": \"$HUMCONVLEVEL\" \n}" > ${JSONFILE}_tmp
 mv -f ${JSONFILE}_tmp ${JSONFILE}
 
 # Debug
