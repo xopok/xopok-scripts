@@ -193,6 +193,7 @@ CreateHTML "${RRDIMG}/index.html" dash "${MAINLEVEL}" "${MAINTEMP}"
 
 JSONFILE="${RRDIMG}/data.json"
 echo "{\n" \
+     " \"Date\": \"$DAYTIME\", \n" \
      " \"co2\": \"$MAINLEVEL\", \n" \
      " \"T_in\": \"$TEMPINTLEVEL\", \n" \
      " \"H_in\": \"$HUMLEVEL\", \n" \
@@ -200,10 +201,10 @@ echo "{\n" \
      " \"H_out\": \"$HUMOUTLEVEL\", \n" \
      " \"H_conv\": \"$HUMCONVLEVEL\" \n}" > ${JSONFILE}_tmp
 echo "{\n" \
-     " \"co2 ppm\": \"$MAINLEVEL\", \n" \
-     " \"T°C in-out\": \"$TEMPINTLEVEL  $TEMPOUTLEVEL\", \n" \
-     " \"H% in-out\": \"$HUMLEVEL  $HUMOUTLEVEL\", \n" \
-     " \"H% conv\": \"$HUMCONVLEVEL\" \n}" > ${JSONFILE}_tmp
+     " \"$MAINLEVEL ppm\": \"$HUMCONVLEVEL% conv\", \n" \
+     " \"$HUMLEVEL% in\": \"$HUMOUTLEVEL% out\", \n" \
+     " \"$TEMPINTLEVEL°C in\": \"$TEMPOUTLEVEL °C out\", \n" \
+     " \"At\": \"$DAYTIME\" \n}" > ${JSONFILE}_tmp
 mv -f ${JSONFILE}_tmp ${JSONFILE}
 
 # Debug
