@@ -202,8 +202,8 @@ echo "{\n" \
      " \"H_conv\": \"$HUMCONVLEVEL\" \n}" > ${JSONFILE}_tmp
 echo "{\n" \
      " \"$MAINLEVEL ppm\": \"$HUMCONVLEVEL% conv\", \n" \
-     " \"$HUMLEVEL% in\": \"$HUMOUTLEVEL% out\", \n" \
-     " \"$TEMPINTLEVEL°C in\": \"$TEMPOUTLEVEL °C out\", \n" \
+     " \"$TEMPINTLEVEL °C \" : \"$HUMLEVEL% in\", \n" \
+     " \"$TEMPOUTLEVEL °C \" : \"$HUMOUTLEVEL% out\", \n" \
      " \"At\": \"$DAYTIME\" \n}" > ${JSONFILE}_tmp
 mv -f ${JSONFILE}_tmp ${JSONFILE}
 
