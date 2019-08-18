@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
 import math
@@ -17,4 +17,4 @@ humint = abshum * ((273.15 + tempin) * 100 * 0.08314) / ((6.112 * math.exp((17.6
 if humint > 100.0:
   humint = 100.0
 
-print '{0:0.1f}'.format(humint)
+print('{0:0.1f}'.format(humint))
