@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #Python app to run a K-30 Sensor
 import serial
@@ -7,7 +7,7 @@ from optparse import OptionParser
 import sys
 
 ser = serial.Serial("/dev/ttyAMA0")
-print >> sys.stderr, "Serial Connected!"
+print("Serial Connected!", file=sys.stderr)
 ser.flushInput()
 time.sleep(1)
 
@@ -22,7 +22,7 @@ num = int(options.avgtime)
 num_init = num
 
 while True:
-    ser.write("\xFE\x44\x00\x08\x02\x9F\x25")
+    ser.write("\xFE\x44\x00\x08\x02\x9F\x25".encode())
     time.sleep(.01)
     resp = ser.read(7)
     high = ord(resp[3])
@@ -30,10 +30,10 @@ while True:
     co2 = (high*256) + low
     sum += co2
     num -= 1
-    print >> sys.stderr, time.strftime("%c") + ": CO2 = " + str(co2) + " ppm"
+    print(time.strftime("%c") + ": CO2 = " + str(co2) + " ppm", file=sys.stderr)
     if (num > 0):
         time.sleep(1)
     if (num == 0):
         break
 
-print int(sum/num_init)
+print(int(sum/num_init))
