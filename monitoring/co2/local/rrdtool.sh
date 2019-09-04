@@ -167,6 +167,7 @@ if [ ! -f "${HUMCONVRRD}" ]
 fi
 
 killall -q -r ".*dht.py.*"
+killall -q -r ".*k30.py.*"
 MAINLEVEL=`/home/pi/co2/k30.py -t 1`
 HUMTEMPLEVEL=`/home/pi/co2/dht.py 24`
 HUMTEMPOUTLEVEL=`/home/pi/co2/dht.py 25`
