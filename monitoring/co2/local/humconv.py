@@ -4,6 +4,9 @@ import sys
 import math
 
 if len(sys.argv) >= 4:
+  if (sys.argv[1] == 'U' or sys.argv[2] == 'U' or sys.argv[3] == 'U'):
+    print('U')
+    sys.exit(1)
   humout = float(sys.argv[1])
   tempout = float(sys.argv[2])
   tempin = float(sys.argv[3])
