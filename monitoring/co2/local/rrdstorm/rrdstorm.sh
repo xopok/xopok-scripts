@@ -344,22 +344,34 @@ RRDgDEF[3]=$(cat <<EOF
 'CDEF:awkb=aws,2,/'
 'CDEF:brkb=brs,2,/'
 'CDEF:bwkb=bws,2,/'
-'LINE1:ar#54EC48:HDD r/s'
-GPRINT:ar:LAST:"%.2lf"
+'LINE1:ar#54EC48:HDD avg r/s'
+GPRINT:ar:AVERAGE:"%.2lf"
 'LINE1:aw#EA644A:w/s'
-GPRINT:aw:LAST:"%.2lf"
+GPRINT:aw:AVERAGE:"%.2lf"
 'LINE2:sars#24BC14:rkB/s'
-GPRINT:arkb:LAST:"%.2lf"
+GPRINT:arkb:AVERAGE:"%.2lf"
+'CDEF:armb=arkb,1024,/'
+'VDEF:totarmb=armb,TOTAL'
+GPRINT:totarmb:"%.2lf MB"
 'LINE2:saws#CC3118:wkB/s'
-GPRINT:awkb:LAST:"%.2lf\n"
-'LINE1:nbr#54EC48:SSD r/s'
-GPRINT:br:LAST:"%.2lf"
+GPRINT:awkb:AVERAGE:"%.2lf"
+'CDEF:awmb=awkb,1024,/'
+'VDEF:totawmb=awmb,TOTAL'
+GPRINT:totawmb:"%.2lf MB\n"
+'LINE1:nbr#54EC48:SSD avg r/s'
+GPRINT:br:AVERAGE:"%.2lf"
 'LINE1:nbw#EA644A:w/s'
-GPRINT:bw:LAST:"%.2lf"
+GPRINT:bw:AVERAGE:"%.2lf"
 'LINE2:snbrs#24BC14:rkB/s'
-GPRINT:brkb:LAST:"%.2lf"
+GPRINT:brkb:AVERAGE:"%.2lf"
+'CDEF:brmb=brkb,1024,/'
+'VDEF:totbrmb=brmb,TOTAL'
+GPRINT:totbrmb:"%.2lf MB\n"
 'LINE2:snbws#CC3118:wkB/s'
-GPRINT:bwkb:LAST:"%.2lf\n"
+GPRINT:bwkb:AVERAGE:"%.2lf"
+'CDEF:bwmb=bwkb,1024,/'
+'VDEF:totbwmb=bwmb,TOTAL'
+GPRINT:totbwmb:"%.2lf MB\n"
 'HRULE:0#FFFFFF'
 EOF
 )
