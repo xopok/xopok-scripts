@@ -34,14 +34,14 @@ if h is None:
 
 for i in (1,2,3,4):
   h2, t2 = get()
-  if h is not None and 0 <= h <= 100.0 and h2 is not None and 0 <= h2 <= 100.0 and abs(t - t2) < 1:
+  if h is not None and 0 <= h <= 100.0 and h2 is not None and 0 <= h2 <= 100.0 and (abs(t - t2) < 1 or time.time() - os.stat(filename).st_mtime > 3600):
     # Good readings
     with open(filename, "w+") as f:
       print('{0:0.1f} {1:0.1f}'.format(h2, t2), file=f)
     print('{0:0.1f} {1:0.1f}'.format(h2, t2))
     sys.exit(0)
   else:
-    print('Attempt {0:d} failed'.format(1), file=sys.stderr)
+    print('Attempt {0:d} failed'.format(i), file=sys.stderr)
         
 
 print('U U')
