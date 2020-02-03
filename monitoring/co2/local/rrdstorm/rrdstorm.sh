@@ -287,8 +287,8 @@ GPRINT:ds1:LAST:"%4.0lf"
 EOF
 )
 
-RRDgGRAPH[12]='14400|temp4|Air, last 4 hours @ "$H":"$M"|[ "$M" = 30 ]|--right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
-RRDgGRAPH[13]='86400|temp24|Air, last day @ "$H":"$M"|[ "$H" = 04 ] && [ "$M" = 30 ]|--x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
+RRDgGRAPH[12]='14400|temp4|Air, last 4 hours|[ "$M" = 30 ]|--right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
+RRDgGRAPH[13]='86400|temp24|Air, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|--x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
 RRDgGRAPH[14]='604800|tempW|Air, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|--x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" --right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
 RRDgGRAPH[15]='2678400|tempM|Air, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
 RRDgGRAPH[16]='31536000|tempY|Air, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
@@ -365,8 +365,8 @@ EOF
 )
 
 #RRDgGRAPH[18]='3600|cpu1|CPU usage, last hour|[ "$M" = 30 ]|-l 0 -r -u 99.99'
-RRDgGRAPH[19]='7200|disks2|Disks IO usage, last 2 hours @ "$H":"$M"|[ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
-RRDgGRAPH[20]='86400|disks24|Disks IO usage, last day @ "$H":"$M"|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[19]='7200|disks2|Disks IO usage, last 2 hours|[ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[20]='86400|disks24|Disks IO usage, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 65536:0 --right-axis-label "B/s"'
 RRDgGRAPH[21]='604800|disksW|Disks IO usage, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" --right-axis 65536:0 --right-axis-label "B/s"'
 RRDgGRAPH[22]='2678400|disksM|Disks IO usage, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
 RRDgGRAPH[23]='31536000|disksY|Disks IO usage, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
@@ -469,8 +469,8 @@ EOF
 #'GPRINT:ufrat:"%1.1lf pct Upload failed\n"'
 #'GPRINT:dfrat:"%1.1lf pct Download failed "'
    
-RRDgGRAPH[24]='7200|piece1|Storj Traffic, last 2 hours @ "$H":"$M"|[ "$M" = 30 ]|-r'
-RRDgGRAPH[26]='86400|piece24|Storj Traffic, last day @ "$H":"$M"|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[24]='7200|piece1|Storj Traffic, last 2 hours|[ "$M" = 30 ]|-r'
+RRDgGRAPH[26]='86400|piece24|Storj Traffic, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
 RRDgGRAPH[27]='604800|pieceW|Storj Traffic, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
 RRDgGRAPH[28]='2678400|pieceM|Storj Traffic, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
 RRDgGRAPH[29]='31536000|pieceY|Storj Traffic, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
@@ -541,12 +541,12 @@ GPRINT:pfg:LAST:"%4.0lf M"
 EOF
 )
 
-#RRDgGRAPH[30]='7200|hdd2|Disk space, 2 last hours @ "$H":"$M"|[ "$M" = 30 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0"'
-#RRDgGRAPH[31]='21600|hdd6|Disk space, last 6 hours @ "$H":"$M"|[ "$M" = 30 ]|-r'
-RRDgGRAPH[32]='86400|hdd24|Disk space, last day @ "$H":"$M"|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H  --right-axis 0.01:0 --right-axis-label "root <- 0"'
-RRDgGRAPH[33]='604800|hddW|Disk space, last week @ "$H":"$M"|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"  --right-axis 0.01:0 --right-axis-label "root <- 0"'
-RRDgGRAPH[34]='2678400|hddM|Disk space, last month @ "$H":"$M"|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r'
-RRDgGRAPH[35]='31536000|hddY|Disk space, last year @ "$H":"$M"|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r'
+#RRDgGRAPH[30]='7200|hdd2|Disk space, 2 last hours|[ "$M" = 30 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0"'
+#RRDgGRAPH[31]='21600|hdd6|Disk space, last 6 hours|[ "$M" = 30 ]|-r'
+RRDgGRAPH[32]='86400|hdd24|Disk space, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H  --right-axis 0.01:0 --right-axis-label "root <- 0"'
+RRDgGRAPH[33]='604800|hddW|Disk space, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"  --right-axis 0.01:0 --right-axis-label "root <- 0"'
+RRDgGRAPH[34]='2678400|hddM|Disk space, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r'
+RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r'
 
 #-------------------------------------------------------------------
 # data definition: WAN traffic
@@ -610,12 +610,12 @@ RRDgDEF[6]=$(cat <<EOF
 EOF
 )
 
-RRDgGRAPH[36]='7200|wan2|WAN traffic, last 2 hours @ "$H":"$M"|[ "$M" = 30 ]|-r'
+RRDgGRAPH[36]='7200|wan2|WAN traffic, last 2 hours|[ "$M" = 30 ]|-r'
 #RRDgGRAPH[37]='14400|wan6|WLAN outgoing traffic, last 4 hours|[ "$M" = 30 ]|-r'
-RRDgGRAPH[38]='86400|wan24|WAN traffic, last day @ "$H":"$M"|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
-RRDgGRAPH[39]='604800|wanW|WAN traffic, last week @ "$H":"$M"|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
-RRDgGRAPH[40]='2678400|wanM|WAN traffic, last month @ "$H":"$M"|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
-RRDgGRAPH[41]='31536000|wanY|WAN traffic, last year @ "$H":"$M"|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
+RRDgGRAPH[38]='86400|wan24|WAN traffic, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[39]='604800|wanW|WAN traffic, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[40]='2678400|wanM|WAN traffic, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
+RRDgGRAPH[41]='31536000|wanY|WAN traffic, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
 
 ####################################################################
 # STOP MODIFICATIONS HERE, UNLESS YOU REALLY KNOW WHAT YOU'RE DOING
@@ -724,7 +724,7 @@ for N in "$@"; do
 				[ -z "${RRDgGRAPH[$P]}" ] && continue
 				BACK=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f1)
 				IMGBASE=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f2)
-				TITLE=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f3)
+				TITLE=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f3)" @ \"$H\":\"$M\""
 				EXTRA=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f5)
 				[ ! -z "$FORCEGRAPH" ] && {
 					RET=1
