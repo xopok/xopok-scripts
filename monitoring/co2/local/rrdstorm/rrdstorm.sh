@@ -350,28 +350,28 @@ GPRINT:ar:AVERAGE:"%.2lf"
 GPRINT:aw:AVERAGE:"%.2lf"
 'LINE2:sars#24BC14:rkB/s'
 GPRINT:arkb:AVERAGE:"%.2lf"
-'CDEF:armb=arkb,1024,/'
-'VDEF:totarmb=armb,TOTAL'
-GPRINT:totarmb:"%.2lf MB"
+'CDEF:argb=arkb,1024,/,1024,/'
+'VDEF:totargb=argb,TOTAL'
+GPRINT:totargb:"%.2lf GiB"
 'LINE2:saws#CC3118:wkB/s'
 GPRINT:awkb:AVERAGE:"%.2lf"
-'CDEF:awmb=awkb,1024,/'
-'VDEF:totawmb=awmb,TOTAL'
-GPRINT:totawmb:"%.2lf MB\n"
+'CDEF:awgb=awkb,1024,/,1024,/'
+'VDEF:totawgb=awgb,TOTAL'
+GPRINT:totawgb:"%.2lf GiB\n"
 'LINE1:nbr#54EC48:SSD avg r/s'
 GPRINT:br:AVERAGE:"%.2lf"
 'LINE1:nbw#EA644A:w/s'
 GPRINT:bw:AVERAGE:"%.2lf"
 'LINE2:snbrs#24BC14:rkB/s'
 GPRINT:brkb:AVERAGE:"%.2lf"
-'CDEF:brmb=brkb,1024,/'
-'VDEF:totbrmb=brmb,TOTAL'
-GPRINT:totbrmb:"%.2lf MB\n"
+'CDEF:brgb=brkb,1024,/,1024,/'
+'VDEF:totbrgb=brgb,TOTAL'
+GPRINT:totbrgb:"%.2lf GiB"
 'LINE2:snbws#CC3118:wkB/s'
 GPRINT:bwkb:AVERAGE:"%.2lf"
-'CDEF:bwmb=bwkb,1024,/'
-'VDEF:totbwmb=bwmb,TOTAL'
-GPRINT:totbwmb:"%.2lf MB\n"
+'CDEF:bwgb=bwkb,1024,/,1024,/'
+'VDEF:totbwbb=bwgb,TOTAL'
+GPRINT:totbwbb:"%.2lf GiB\n"
 'HRULE:0#FFFFFF'
 EOF
 )
@@ -443,12 +443,12 @@ RRDgDEF[4]=$(cat <<EOF
 'DEF:ds8=\$RRD:audited:AVERAGE'
 'DEF:ds9=\$RRD:auditfailed:AVERAGE'
 'DEF:dsd=\$RRD:deleted:AVERAGE'
-'CDEF:ln1=ds3,ds3,UNKN,IF'
-'CDEF:ln2=ds2,ds3,ds2,+,UNKN,IF'
-'AREA:ds3#CC7016'
-'AREA:ds2#1598C3::STACK'
-'LINE1:ln1#EC9D48'
-'LINE1:ln2#48C4EC'
+'CDEF:ln1=ds2,ds2,UNKN,IF'
+'CDEF:ln2=ds3,ds2,ds3,+,UNKN,IF'
+'AREA:ds2#1598C3'
+'AREA:ds3#CC7016::STACK'
+'LINE1:ln2#EC9D48'
+'LINE1:ln1#48C4EC'
 'CDEF:d=ds5'
 'CDEF:df=ds6'
 'CDEF:af=ds9'
@@ -461,13 +461,21 @@ RRDgDEF[4]=$(cat <<EOF
 'AREA:nd#24BC14'
 'AREA:ndf#CC7016::STACK'
 'AREA:naf#CC3118::STACK'
-'LINE1:lnd#54EC48'
 'LINE1:lndf#EC9D48'
+'LINE1:lnd#54EC48'
 'LINE1:lnaf#EA644A'
 'CDEF:nds8=ds8,ds9,+,-1,*'
 'LINE1:nds8#FFFFFF'
 'LINE1:dsd#FFFFFF'
 'HRULE:0#FFFFFF'
+'VDEF:totuploaded=ds2,TOTAL'
+  GPRINT:totuploaded:"Uploaded %1.1lf %s"
+'VDEF:totupload=ds1,TOTAL'
+  GPRINT:totupload:"/  %1.1lf %s;"
+'VDEF:totdownloaded=ds5,TOTAL'
+  GPRINT:totdownloaded:"Downloaded %1.1lf %s"
+'VDEF:totdownload=ds4,TOTAL'
+  GPRINT:totdownload:"/  %1.1lf %s attempts\n"
 EOF
 )  
 #'CDEF:utotal=ds2,'
@@ -513,7 +521,8 @@ TOTAL=$(df -B1 /place | tail -n 1 | awk "{ print \$3; }")
 OTHER=$(du -sx -B1 --exclude ${STORAGE} /place | awk "{ print \$1; }")
 echo $(expr $TOTAL - $OTHER)
 '
-RRDgUM[5]='/root (x100) <- 0 -> /place'
+#RRDgUM[5]='/root (x100) <- 0 -> /place'
+RRDgUM[5]='/place/storj.v3'
 RRDgLIST[5]="32 33 34 35"
 RRDgDEF[5]=$(cat <<EOF
 'DEF:rf=\$RRD:rootfree:AVERAGE'
@@ -530,35 +539,39 @@ RRDgDEF[5]=$(cat <<EOF
 'CDEF:nru=ru,-100,*'
 'CDEF:lnnru=ru,nru,UNKN,IF'
 'CDEF:lnnrf=ru,nrf,nru,+,UNKN,IF'
-'AREA:nru#EC9D48:root-used'
-GPRINT:rug:LAST:"%4.0lf M"
-'AREA:nrf#a6f0a1:root-free:STACK'
-GPRINT:rfg:LAST:"%4.0lf M\n"
-'LINE1:lnnru#CC7016'
-'LINE1:lnnrf#24BC14'
+GPRINT:rug:LAST:"/ used %4.0lf M"
+GPRINT:rfg:LAST:"/ free %4.0lf M\n"
 'CDEF:lnps=ps,ps,UNKN,IF'
 'CDEF:lnpu=pu,pu,UNKN,IF'
 'CDEF:lnpf=pu,pf,pu,+,UNKN,IF'
 'CDEF:puns=pu,ps,-'
-'AREA:ps#48C4EC:Storj used'
+'AREA:ps#1598C3:/place/storj.v3 used'
 GPRINT:psg:LAST:"%4.0lf M"
-'AREA:puns#EC9D48:/place used:STACK'
-GPRINT:pug:LAST:"%4.0lf M"
-'AREA:pf#a6f0a1:/place free:STACK'
-GPRINT:pfg:LAST:"%4.0lf M"
-'LINE1:lnpu#CC7016'
-'LINE1:lnpf#C9B215'
-'LINE1:ps#1598C3'
-'HRULE:0#000000'
+GPRINT:pug:LAST:"/place used %4.0lf M"
+GPRINT:pfg:LAST:"/place free %4.0lf M"
+'LINE1:ps#48C4EC'
 EOF
 )
 
+#'AREA:nru#EC9D48:root-used'
+#'AREA:nrf#a6f0a1:root-free:STACK'
+#'LINE1:lnnru#CC7016'
+#'LINE1:lnnrf#24BC14'
+#'AREA:puns#EC9D48:/place used:STACK'
+#'AREA:pf#a6f0a1:/place free:STACK'
+#'LINE1:lnpu#CC7016'
+#'LINE1:lnpf#C9B215'
+#'HRULE:0#000000'
+
 #RRDgGRAPH[30]='7200|hdd2|Disk space, 2 last hours|[ "$M" = 30 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0"'
 #RRDgGRAPH[31]='21600|hdd6|Disk space, last 6 hours|[ "$M" = 30 ]|-r'
-RRDgGRAPH[32]='86400|hdd24|Disk space, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H  --right-axis 0.01:0 --right-axis-label "root <- 0"'
-RRDgGRAPH[33]='604800|hddW|Disk space, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"  --right-axis 0.01:0 --right-axis-label "root <- 0"'
-RRDgGRAPH[34]='2678400|hddM|Disk space, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r'
-RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r'
+RRDgGRAPH[32]='86400|hdd24|Disk space, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H '
+RRDgGRAPH[33]='604800|hddW|Disk space, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" '
+RRDgGRAPH[34]='2678400|hddM|Disk space, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid '
+RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid '
+#--right-axis 0.01:0 --right-axis-label "root <- 0"
+
+#--y-grid 1000000000:10
 
 #-------------------------------------------------------------------
 # data definition: WAN traffic
@@ -577,10 +590,10 @@ RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[6]="in:out:dockin:dockout"
 RRDuVAL[6]='
-IF="eth0"
+IF="eth0:"
 IN=$(grep "${IF}" /proc/net/dev|awk -F ":" "{print \$2}"|awk "{print \$1}")
 OUT=$(grep "${IF}" /proc/net/dev|awk -F ":" "{print \$2}"|awk "{print \$9}")
-IF="docker0"
+IF="docker0:"
 DOCKIN=$(grep "${IF}" /proc/net/dev|awk -F ":" "{print \$2}"|awk "{print \$1}")
 DOCKOUT=$(grep "${IF}" /proc/net/dev|awk -F ":" "{print \$2}"|awk "{print \$9}")
 echo "${IN}:${OUT}:${DOCKIN}:${DOCKOUT}"
