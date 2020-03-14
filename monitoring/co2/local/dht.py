@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 import Adafruit_DHT
 
 # Parse command line parameters.
