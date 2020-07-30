@@ -237,8 +237,8 @@ RRDuVAL[2]='
 CO2FILE=/dev/shm/co2level
 CO2LEVEL=`/home/pi/co2/k30.py -t 1`
 echo "${CO2LEVEL}" > ${CO2FILE}
-HUMTEMPINT=`/home/pi/co2/dht.py 24`
-HUMTEMPOUT=`/home/pi/co2/dht.py 25`
+HUMTEMPINT=`cat /dev/shm/sdr-Nexus-TH-51-1`
+HUMTEMPOUT=`cat /dev/shm/sdr-Nexus-TH-57-2`
 HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT}`
 HUMCONV=$(echo "$HUMTEMP"| awk "{print \$3\" \"\$4\" \"\$2}")
 echo $HUMCONV > /tmp/conv
@@ -377,7 +377,7 @@ EOF
 )
 
 #RRDgGRAPH[18]='3600|cpu1|CPU usage, last hour|[ "$M" = 30 ]|-l 0 -r -u 99.99'
-RRDgGRAPH[19]='7200|disks2|Disks IO usage, last 2 hours|[ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[19]='14400|disks4|Disks IO usage, last 4 hours|[ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s" --alt-y-grid'
 RRDgGRAPH[20]='86400|disks24|Disks IO usage, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 65536:0 --right-axis-label "B/s"'
 RRDgGRAPH[21]='604800|disksW|Disks IO usage, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" --right-axis 65536:0 --right-axis-label "B/s"'
 RRDgGRAPH[22]='2678400|disksM|Disks IO usage, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
@@ -489,11 +489,11 @@ EOF
 #'GPRINT:ufrat:"%1.1lf pct Upload failed\n"'
 #'GPRINT:dfrat:"%1.1lf pct Download failed "'
    
-RRDgGRAPH[24]='7200|piece1|Storj Traffic, last 2 hours|[ "$M" = 30 ]|-r'
-RRDgGRAPH[26]='86400|piece24|Storj Traffic, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
-RRDgGRAPH[27]='604800|pieceW|Storj Traffic, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
-RRDgGRAPH[28]='2678400|pieceM|Storj Traffic, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
-RRDgGRAPH[29]='31536000|pieceY|Storj Traffic, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
+RRDgGRAPH[24]='14400|piece4|Storj Traffic, last 4 hours|[ "$M" = 30 ]|-r --right-axis 1:0 --alt-y-grid'
+RRDgGRAPH[26]='86400|piece24|Storj Traffic, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[27]='604800|pieceW|Storj Traffic, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[28]='2678400|pieceM|Storj Traffic, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 '
+RRDgGRAPH[29]='31536000|pieceY|Storj Traffic, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 '
 
 #-------------------------------------------------------------------
 # data definition: Disk space
@@ -523,7 +523,7 @@ echo $(expr $TOTAL - $OTHER)
 '
 #RRDgUM[5]='/root (x100) <- 0 -> /place'
 RRDgUM[5]='/place/storj.v3'
-RRDgLIST[5]="32 33 34 35"
+RRDgLIST[5]="30 32 33 34 35"
 RRDgDEF[5]=$(cat <<EOF
 'DEF:rf=\$RRD:rootfree:AVERAGE'
 'DEF:ru=\$RRD:rootused:AVERAGE'
@@ -563,12 +563,12 @@ EOF
 #'LINE1:lnpf#C9B215'
 #'HRULE:0#000000'
 
-#RRDgGRAPH[30]='7200|hdd2|Disk space, 2 last hours|[ "$M" = 30 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0"'
+RRDgGRAPH[30]='14400|hdd4|Disk space, 4 last hours|[ "$M" = 30 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid'
 #RRDgGRAPH[31]='21600|hdd6|Disk space, last 6 hours|[ "$M" = 30 ]|-r'
-RRDgGRAPH[32]='86400|hdd24|Disk space, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H '
-RRDgGRAPH[33]='604800|hddW|Disk space, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" '
-RRDgGRAPH[34]='2678400|hddM|Disk space, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid '
-RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid '
+RRDgGRAPH[32]='86400|hdd24|Disk space, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H '
+RRDgGRAPH[33]='604800|hddW|Disk space, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" '
+RRDgGRAPH[34]='2678400|hddM|Disk space, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid '
+RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid '
 #--right-axis 0.01:0 --right-axis-label "root <- 0"
 
 #--y-grid 1000000000:10
@@ -579,10 +579,10 @@ RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 3
 
 RRDcFILE[6]="wan:60:WAN traffic graphs"
 RRDcDEF[6]='
-DS:in:DERIVE:600:0:1000000000
-DS:out:DERIVE:600:0:1000000000
-DS:dockin:DERIVE:600:0:1000000000
-DS:dockout:DERIVE:600:0:1000000000
+DS:in:COUNTER:600:0:1000000000
+DS:out:COUNTER:600:0:1000000000
+DS:dockin:COUNTER:600:0:1000000000
+DS:dockout:COUNTER:600:0:1000000000
 RRA:AVERAGE:0.5:1m:1d
 RRA:AVERAGE:0.5:10m:1w
 RRA:AVERAGE:0.5:1h:1M
@@ -635,12 +635,59 @@ RRDgDEF[6]=$(cat <<EOF
 EOF
 )
 
-RRDgGRAPH[36]='7200|wan2|WAN traffic, last 2 hours|[ "$M" = 30 ]|-r'
+RRDgGRAPH[36]='14400|wan4|WAN traffic, last 4 hours|[ "$M" = 30 ]|-r --right-axis 1:0 --alt-y-grid'
 #RRDgGRAPH[37]='14400|wan6|WLAN outgoing traffic, last 4 hours|[ "$M" = 30 ]|-r'
-RRDgGRAPH[38]='86400|wan24|WAN traffic, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
-RRDgGRAPH[39]='604800|wanW|WAN traffic, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
-RRDgGRAPH[40]='2678400|wanM|WAN traffic, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
-RRDgGRAPH[41]='31536000|wanY|WAN traffic, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r '
+RRDgGRAPH[38]='86400|wan24|WAN traffic, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[39]='604800|wanW|WAN traffic, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[40]='2678400|wanM|WAN traffic, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid --right-axis 1:0 '
+RRDgGRAPH[41]='31536000|wanY|WAN traffic, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid --right-axis 1:0 '
+
+#------------------------------------------------------------------------
+# data definition: System components health (e.g. HDD or CPU temperature)
+#------------------------------------------------------------------------
+
+RRDcFILE[7]="syshealth:60:System health graphs"
+RRDcDEF[7]='
+DS:tcpu:GAUGE:120:-273:100
+DS:thdd:GAUGE:120:-273:100
+DS:tssd:GAUGE:120:-273:100
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:4h:1y
+RRA:AVERAGE:0.5:1d:10y
+RRA:MAX:0.5:1d:10y
+RRA:MIN:0.5:1d:10y
+'
+RRDuSRC[7]="tcpu:thdd:tssd"
+RRDuVAL[7]='
+TCPU=$(cat /sys/class/thermal/thermal_zone0/temp | awk "{printf \"%.1f\", \$1/1000}")
+THDD=$(smartctl -d sat -a /dev/disk/by-id/usb-WD_Elements_25A3_37534B5837533457-0:0 | grep "Celsius" | awk "{print \$10;}")
+TSSD=$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5e83a97f356e1138                    | grep "Celsius" | awk "{print \$10;}")
+echo "${TCPU}:${THDD}:${TSSD}"
+'
+RRDgUM[7]='Temperature'
+RRDgLIST[7]="42 44 45 46 47"
+RRDgDEF[7]=$(cat <<EOF
+'DEF:tcpu=\$RRD:tcpu:AVERAGE'
+'DEF:thdd=\$RRD:thdd:AVERAGE'
+'DEF:tssd=\$RRD:tssd:AVERAGE'
+'LINE1:tcpu#FF0000:t CPU'
+  GPRINT:tcpu:LAST:" %.2lf\n"
+'LINE1:thdd#00FF00:t HDD'
+  GPRINT:thdd:LAST:" %.0lf\n"
+'LINE1:tssd#00ACCF:t SSD'
+  GPRINT:tssd:LAST:" %.0lf\n"
+EOF
+)
+
+RRDgGRAPH[42]='14400|syshealth4|System temp, last 4 hours|[ "$M" = 30 ]| --right-axis 1:0'
+#RRDgGRAPH[43]='14400|syshealth6|System load, last 4 hours|[ "$M" = 30 ]'
+RRDgGRAPH[44]='86400|syshealth24|System temp, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[45]='604800|syshealthW|System temp, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[46]='2678400|syshealthM|System temp, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0'
+RRDgGRAPH[47]='31536000|syshealthY|System temp, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0'
+
 
 ####################################################################
 # STOP MODIFICATIONS HERE, UNLESS YOU REALLY KNOW WHAT YOU'RE DOING
@@ -725,6 +772,28 @@ for N in "$@"; do
 					echo "<img src=\"${IMGBASE}.svg\"><br>" >> "$HTMLFILE"
 				done
 				echo "</center><p>RRDStorm for ${VERSION} / ${DATE}</p></body>" >> "$HTMLFILE"
+				# Creating the 4 hours file
+				DASHFILE="${RRDOUTPUT}/4h.html"
+				echo "<head><title>4 Hours dashboard</title>
+					<style>body{background:white;color:black}</style></head>
+					<body style=\"background-color:black;color:lightgray\"><h1>4 Hours dashboard</h1><center>" > "$DASHFILE"
+				for P in 12 19 24 30 36 42; do
+					[ -z "${RRDgGRAPH[$P]}" ] && continue
+					IMGBASE=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f2)
+					echo "<img src=\"${IMGBASE}.svg\"><br>" >> "$DASHFILE"
+				done
+				echo "</center><p>RRDStorm for ${VERSION} / ${DATE}</p></body>" >> "$DASHFILE"
+				# Creating the 1 day file
+				DASHFILE="${RRDOUTPUT}/1d.html"
+				echo "<head><title>1 Day dashboard</title>
+					<style>body{background:white;color:black}</style></head>
+					<body style=\"background-color:black;color:lightgray\"><h1>1 Day dashboard</h1><center>" > "$DASHFILE"
+				for P in 13 20 26 32 38 44; do
+					[ -z "${RRDgGRAPH[$P]}" ] && continue
+					IMGBASE=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f2)
+					echo "<img src=\"${IMGBASE}.svg\"><br>" >> "$DASHFILE"
+				done
+				echo "</center><p>RRDStorm for ${VERSION} / ${DATE}</p></body>" >> "$DASHFILE"
 			}
 			# update the main HTML index
 			[ ! -z "$MAKEINDEX" ] && {
