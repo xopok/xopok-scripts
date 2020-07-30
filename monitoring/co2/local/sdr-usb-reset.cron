@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/usr/sbin/usb_modeswitch -v 0x0bda -p 0x2838 --reset-usb
