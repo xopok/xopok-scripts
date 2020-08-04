@@ -234,15 +234,17 @@ RRA:MIN:0.5:1d:10y
 '
 RRDuSRC[2]="co2:humint:tempint:humout:tempout:humconv"
 RRDuVAL[2]='
-CO2FILE=/dev/shm/co2level
-CO2LEVEL=`/home/pi/co2/k30.py -t 1`
-echo "${CO2LEVEL}" > ${CO2FILE}
+#CO2FILE=/dev/shm/co2level
+#CO2LEVEL=`/home/pi/co2/k30.py -t 1`
+CO2LEVEL=U
+#echo "${CO2LEVEL}" > ${CO2FILE}
+sudo -u ubuntu rsync -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
 HUMTEMPINT=`cat /dev/shm/sdr-Nexus-TH-51-1`
 HUMTEMPOUT=`cat /dev/shm/sdr-Nexus-TH-57-2`
 HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT}`
 HUMCONV=$(echo "$HUMTEMP"| awk "{print \$3\" \"\$4\" \"\$2}")
 echo $HUMCONV > /tmp/conv
-HUMCONV=`/home/pi/co2/humconv.py $HUMCONV`
+HUMCONV=`/home/ubuntu/xopok-scripts/monitoring/co2/local/humconv.py $HUMCONV`
 HUMTEMP=`echo ${HUMTEMP} | sed "s/ /:/g"`
 TEMPOUT=`echo ${HUMTEMPOUT} | sed "s/.* //"`
 
@@ -320,8 +322,8 @@ RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[3]="ar:arm:ars:aw:awm:aws:br:brm:brs:bw:bwm:bws"
 RRDuVAL[3]='
-echo -n $(cat /sys/block/sdb/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
-echo $(cat /sys/block/sda/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
+echo -n $(cat /sys/block/`readlink /dev/disk/by-id/usb-WD_Elements_25A3_5A324A5257504554-0\:0 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
+echo $(cat /sys/block/`readlink /dev/disk/by-id/ata-OCZ-VERTEX2_OCZ-4LNRT8Q4D5JSE37Q | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
 '
 RRDgUM[3]='SSD <-- requests/s --> HDD'
 RRDgLIST[3]="19 20 21 22 23"
@@ -503,9 +505,8 @@ RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[5]="rootfree:rootused:placefree:placeused:placestorj"
 RRDuVAL[5]='
-SP=$(df "-B1")
-echo -n $(echo "$SP"|grep /dev/sda2|awk "{print \$4\":\"\$3}"):
-echo -n $(echo "$SP"|grep /place|awk "{print \$4\":\"\$3}"):
+echo -n $(df -B1 / | tail -n 1 | awk "{print \$4\":\"\$3}"):
+echo -n $(df -B1 /place | tail -n 1 | awk "{print \$4\":\"\$3}"):
 STORAGE=/place/storj
 TOTAL=$(df -B1 /place | tail -n 1 | awk "{ print \$3; }")
 OTHER=$(du -sx -B1 --exclude "${STORAGE}*" /place | awk "{ print \$1; }")
