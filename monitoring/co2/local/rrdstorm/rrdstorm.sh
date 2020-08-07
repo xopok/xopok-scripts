@@ -234,15 +234,17 @@ RRA:MIN:0.5:1d:10y
 '
 RRDuSRC[2]="co2:humint:tempint:humout:tempout:humconv"
 RRDuVAL[2]='
-CO2FILE=/dev/shm/co2level
-CO2LEVEL=`/home/pi/co2/k30.py -t 1`
-echo "${CO2LEVEL}" > ${CO2FILE}
+#CO2FILE=/dev/shm/co2level
+#CO2LEVEL=`/home/pi/co2/k30.py -t 1`
+CO2LEVEL=U
+#echo "${CO2LEVEL}" > ${CO2FILE}
+sudo -u ubuntu rsync -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
 HUMTEMPINT=`cat /dev/shm/sdr-Nexus-TH-51-1`
 HUMTEMPOUT=`cat /dev/shm/sdr-Nexus-TH-57-2`
 HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT}`
 HUMCONV=$(echo "$HUMTEMP"| awk "{print \$3\" \"\$4\" \"\$2}")
 echo $HUMCONV > /tmp/conv
-HUMCONV=`/home/pi/co2/humconv.py $HUMCONV`
+HUMCONV=`/home/ubuntu/xopok-scripts/monitoring/co2/local/humconv.py $HUMCONV`
 HUMTEMP=`echo ${HUMTEMP} | sed "s/ /:/g"`
 TEMPOUT=`echo ${HUMTEMPOUT} | sed "s/.* //"`
 
@@ -320,8 +322,8 @@ RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[3]="ar:arm:ars:aw:awm:aws:br:brm:brs:bw:bwm:bws"
 RRDuVAL[3]='
-echo -n $(cat /sys/block/sda/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
-echo $(cat /sys/block/sdb/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
+echo -n $(cat /sys/block/`readlink /dev/disk/by-id/usb-WD_Elements_25A3_5A324A5257504554-0\:0 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
+echo $(cat /sys/block/`readlink /dev/disk/by-id/ata-OCZ-VERTEX2_OCZ-4LNRT8Q4D5JSE37Q | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
 '
 RRDgUM[3]='SSD <-- requests/s --> HDD'
 RRDgLIST[3]="19 20 21 22 23"
@@ -407,27 +409,17 @@ RRA:AVERAGE:0.5:144:1460
 '
 RRDuSRC[4]="upload:uploaded:uploadfailed:download:downloaded:downloadfailed:audit:audited:auditfailed:deleted"
 RRDuVAL[4]='
-BASE=/dev/shm/storj
-Calc()
-{
-if [ ! -f $1 ]; then
-  echo 0
-else
-  mv -f $1 $1.old;
-  R=$(wc -c < $1.old)
-  echo $(expr $R \* 60)
-fi
-}
-UPLOAD=$(Calc ${BASE}-upload)
-UPLOADED=$(Calc ${BASE}-uploaded)
-UPLOADFAILED=$(Calc ${BASE}-uploadfailed)
-DOWNLOAD=$(Calc ${BASE}-download)
-DOWNLOADED=$(Calc ${BASE}-downloaded)
-DOWNLOADFAILED=$(Calc ${BASE}-downloadfailed)
-AUDIT=$(Calc ${BASE}-audit)
-AUDITED=$(Calc ${BASE}-audited)
-AUDITFAILED=$(Calc ${BASE}-auditfailed)
-DELETED=$(Calc ${BASE}-deleted)
+LOG=`sudo docker logs --since 1m storagenode0 2>&1; sudo docker logs --since 1m storagenode1 2>&1`
+UPLOAD=$(echo "$LOG" | grep -c "upload started" | xargs -n 1 expr 60 \*)
+UPLOADED=$(echo "$LOG" | grep -c "uploaded" | xargs -n 1 expr 60 \*)
+UPLOADFAILED=$(echo "$LOG" | grep -c "upload [a-z]*led" | xargs -n 1 expr 60 \*)
+DOWNLOAD=$(echo "$LOG" | grep -c "download started" | xargs -n 1 expr 60 \*)
+DOWNLOADED=$(echo "$LOG" | grep -c "downloaded" | xargs -n 1 expr 60 \*)
+DOWNLOADFAILED=$(echo "$LOG" | grep -c "download failed" | xargs -n 1 expr 60 \*)
+AUDIT=$(echo "$LOG" | grep -c "download started.*GET_AUDIT" | xargs -n 1 expr 60 \*)
+AUDITED=$(echo "$LOG" | grep -c "downloaded.*GET_AUDIT" | xargs -n 1 expr 60 \*)
+AUDITFAILED=$(echo "$LOG" | grep -c "download failed.*GET_AUDIT" | xargs -n 1 expr 60 \*)
+DELETED=$(echo "$LOG" | grep -c "deleted" | xargs -n 1 expr 60 \*)
 echo "${UPLOAD}:${UPLOADED}:${UPLOADFAILED}:${DOWNLOAD}:${DOWNLOADED}:${DOWNLOADFAILED}:${AUDIT}:${AUDITED}:${AUDITFAILED}:${DELETED}"
 '
 RRDgUM[4]='Downloads <-- pieces/min --> Uploads'
@@ -513,16 +505,15 @@ RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[5]="rootfree:rootused:placefree:placeused:placestorj"
 RRDuVAL[5]='
-SP=$(df "-B1")
-echo -n $(echo "$SP"|grep /dev/root|awk "{print \$4\":\"\$3}"):
-echo -n $(echo "$SP"|grep /place|awk "{print \$4\":\"\$3}"):
-STORAGE=/place/storj.v3
+echo -n $(df -B1 / | tail -n 1 | awk "{print \$4\":\"\$3}"):
+echo -n $(df -B1 /place | tail -n 1 | awk "{print \$4\":\"\$3}"):
+STORAGE=/place/storj
 TOTAL=$(df -B1 /place | tail -n 1 | awk "{ print \$3; }")
-OTHER=$(du -sx -B1 --exclude ${STORAGE} /place | awk "{ print \$1; }")
+OTHER=$(du -sx -B1 --exclude "${STORAGE}*" /place | awk "{ print \$1; }")
 echo $(expr $TOTAL - $OTHER)
 '
 #RRDgUM[5]='/root (x100) <- 0 -> /place'
-RRDgUM[5]='/place/storj.v3'
+RRDgUM[5]='/place/storj?'
 RRDgLIST[5]="30 32 33 34 35"
 RRDgDEF[5]=$(cat <<EOF
 'DEF:rf=\$RRD:rootfree:AVERAGE'
@@ -563,12 +554,12 @@ EOF
 #'LINE1:lnpf#C9B215'
 #'HRULE:0#000000'
 
-RRDgGRAPH[30]='14400|hdd4|Disk space, 4 last hours|[ "$M" = 30 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid'
+RRDgGRAPH[30]='14400|hdd4|Disk space, 4 last hours|[ "$M" = 30 ]|-r --right-axis 1:0 --alt-y-grid'
 #RRDgGRAPH[31]='21600|hdd6|Disk space, last 6 hours|[ "$M" = 30 ]|-r'
-RRDgGRAPH[32]='86400|hdd24|Disk space, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H '
-RRDgGRAPH[33]='604800|hddW|Disk space, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" '
-RRDgGRAPH[34]='2678400|hddM|Disk space, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid '
-RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 0.01:0 --right-axis-label "root <- 0" --alt-y-grid '
+RRDgGRAPH[32]='86400|hdd24|Disk space, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H '
+RRDgGRAPH[33]='604800|hddW|Disk space, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" '
+RRDgGRAPH[34]='2678400|hddM|Disk space, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0  --alt-y-grid '
+RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0  --alt-y-grid '
 #--right-axis 0.01:0 --right-axis-label "root <- 0"
 
 #--y-grid 1000000000:10
@@ -662,7 +653,7 @@ RRA:MIN:0.5:1d:10y
 RRDuSRC[7]="tcpu:thdd:tssd"
 RRDuVAL[7]='
 TCPU=$(cat /sys/class/thermal/thermal_zone0/temp | awk "{printf \"%.1f\", \$1/1000}")
-THDD=$(smartctl -d sat -a /dev/disk/by-id/usb-WD_Elements_25A3_37534B5837533457-0:0 | grep "Celsius" | awk "{print \$10;}")
+THDD=$(smartctl -d sat -a /dev/disk/by-id/usb-WD_Elements_25A3_5A324A5257504554-0:0 | grep "Celsius" | awk "{print \$10;}")
 TSSD=$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5e83a97f356e1138                    | grep "Celsius" | awk "{print \$10;}")
 echo "${TCPU}:${THDD}:${TSSD}"
 '
