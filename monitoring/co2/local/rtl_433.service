@@ -1,0 +1,11 @@
+[Unit]
+Description=rtl_433 receiver Service
+
+[Service]
+ExecStart=/home/pi/xopok-scripts/monitoring/co2/local/sdr.sh
+StandardOutput=null
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
