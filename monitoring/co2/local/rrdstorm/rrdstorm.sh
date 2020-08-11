@@ -220,10 +220,14 @@ RRDcFILE[2]="temp:60:CO2, temperature and humidity"
 RRDcDEF[2]='
 DS:co2:GAUGE:120:0:10000
 DS:tempint:GAUGE:120:-273:100
+DS:tempkid:GAUGE:120:-273:100
 DS:tempout:GAUGE:120:-273:100
+DS:tempout2:GAUGE:120:-273:100
 DS:humint:GAUGE:120:0:100
+DS:humkid:GAUGE:120:0:100
 DS:humout:GAUGE:120:0:100
-DS:humconv:GAUGE:120:0:1000
+DS:humout2:GAUGE:120:0:100
+DS:humconv:GAUGE:120:0:100
 RRA:AVERAGE:0.5:1m:1d
 RRA:AVERAGE:0.5:10m:1w
 RRA:AVERAGE:0.5:1h:1M
@@ -232,16 +236,26 @@ RRA:AVERAGE:0.5:1d:10y
 RRA:MAX:0.5:1d:10y
 RRA:MIN:0.5:1d:10y
 '
-RRDuSRC[2]="co2:humint:tempint:humout:tempout:humconv"
+RRDuSRC[2]="co2:humint:tempint:humout:tempout:humout2:tempout2:humkid:tempkid:humconv"
 RRDuVAL[2]='
 #CO2FILE=/dev/shm/co2level
 #CO2LEVEL=`/home/pi/co2/k30.py -t 1`
 CO2LEVEL=U
 #echo "${CO2LEVEL}" > ${CO2FILE}
-sudo -u ubuntu rsync -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
+sudo -u ubuntu rsync -ax -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
+Calc()
+{
+if [ -f "$1" ] && [ `stat --format=%Y $1` -ge $(( `date +%s` - 120 )) ]; then
+  cat "$1"
+else
+  echo "U U"
+fi
+}
 HUMTEMPINT=`cat /dev/shm/sdr-Nexus-TH-51-1`
-HUMTEMPOUT=`cat /dev/shm/sdr-Nexus-TH-57-2`
-HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT}`
+HUMTEMPOUT=$(Calc /dev/shm/sdr-Nexus-TH-51-2)
+HUMTEMPOUT2=$(Calc /dev/shm/sdr-Hideki-TS04-3-2)
+HUMTEMPKID=`cat /dev/shm/sdr-Nexus-TH-51-3`
+HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT} ${HUMTEMPOUT2} ${HUMTEMPKID}`
 HUMCONV=$(echo "$HUMTEMP"| awk "{print \$3\" \"\$4\" \"\$2}")
 echo $HUMCONV > /tmp/conv
 HUMCONV=`/home/ubuntu/xopok-scripts/monitoring/co2/local/humconv.py $HUMCONV`
@@ -257,35 +271,43 @@ RRDgDEF[2]=$(cat <<EOF
 'DEF:ds1=\$RRD:co2:AVERAGE'
 'DEF:ds4=\$RRD:humconv:AVERAGE'
 'DEF:ds5=\$RRD:tempint:AVERAGE'
+'DEF:ds5k=\$RRD:tempkid:AVERAGE'
 'DEF:ds6=\$RRD:humint:AVERAGE'
 'DEF:ds7=\$RRD:tempout:AVERAGE'
+'DEF:ds72=\$RRD:tempout2:AVERAGE'
 'DEF:ds7min=\$RRD:tempout:MIN'
 'DEF:ds7max=\$RRD:tempout:MAX'
 'DEF:ds8=\$RRD:humout:AVERAGE'
 'CDEF:scaled_ds4=ds4,20,*'
 'CDEF:scaled_ds5=ds5,20,*'
+'CDEF:scaled_ds5k=ds5k,20,*'
 'CDEF:scaled_ds6=ds6,20,*'
 'CDEF:scaled_ds7=ds7,20,*'
+'CDEF:scaled_ds72=ds72,20,*'
 'CDEF:scaled_ds7min=ds7min,20,*'
 'CDEF:scaled_ds7max=ds7max,20,*'
 'CDEF:scaled_ds8=ds8,20,*'
 'AREA:1200#634d21'
 'AREA:800#495217'
 'AREA:400#3e4d3e'
-'LINE1:scaled_ds4#ffffff:HumConv:dashes=4,2'
-GPRINT:ds4:LAST:"%3.1lf"
-'LINE1:scaled_ds5#a0a0a0:TInt'
+'LINE1:scaled_ds5k#FEE12B:TKid '
+GPRINT:ds5k:LAST:"%3.1lf"
+'LINE1:scaled_ds5#a0a0a0:TInt '
 GPRINT:ds5:LAST:"%3.1lf"
-'LINE1:scaled_ds6#00ACCF:HumInt'
+'LINE1:scaled_ds6#00ACCF:HumInt '
 GPRINT:ds6:LAST:"%3.1lf"
-'LINE1:scaled_ds7#309030:TOut'
+'LINE2:ds1#5167b5:CO2'
+GPRINT:ds1:LAST:"%4.0lf\n"
+'LINE1:scaled_ds7#309030:TWest'
 GPRINT:ds7:LAST:"%3.1lf"
-'LINE1:scaled_ds8#00CF6F:HumOut'
+'LINE1:scaled_ds72#FF7F00:TEast'
+GPRINT:ds72:LAST:"%3.1lf"
+'LINE1:scaled_ds8#00CF6F:HumWest'
 GPRINT:ds8:LAST:"%3.1lf"
 'LINE1:scaled_ds7min#0000FF'
 'LINE1:scaled_ds7max#ff0000'
-'LINE2:ds1#5167b5:CO2'
-GPRINT:ds1:LAST:"%4.0lf"
+'LINE1:scaled_ds4#ffffff:HumConv:dashes=4,2'
+GPRINT:ds4:LAST:"%3.1lf\n"
 EOF
 )
 
