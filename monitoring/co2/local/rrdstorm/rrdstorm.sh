@@ -343,9 +343,10 @@ RRA:AVERAGE:0.5:1h:1M
 RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[3]="ar:arm:ars:aw:awm:aws:br:brm:brs:bw:bwm:bws"
+#echo $(cat /sys/block/`readlink /dev/disk/by-id/ata-OCZ-VERTEX2_OCZ-4LNRT8Q4D5JSE37Q | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
 RRDuVAL[3]='
 echo -n $(cat /sys/block/`readlink /dev/disk/by-id/usb-WD_Elements_25A3_5A324A5257504554-0\:0 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
-echo $(cat /sys/block/`readlink /dev/disk/by-id/ata-OCZ-VERTEX2_OCZ-4LNRT8Q4D5JSE37Q | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
+echo U:U:U:U:U:U
 '
 RRDgUM[3]='SSD <-- requests/s --> HDD'
 RRDgLIST[3]="19 20 21 22 23"
@@ -431,7 +432,7 @@ RRA:AVERAGE:0.5:144:1460
 '
 RRDuSRC[4]="upload:uploaded:uploadfailed:download:downloaded:downloadfailed:audit:audited:auditfailed:deleted"
 RRDuVAL[4]='
-LOG=`sudo docker logs --since 1m storagenode0 2>&1; sudo docker logs --since 1m storagenode1 2>&1`
+LOG=`sudo docker logs --since 1m storagenode0 2>&1; sudo docker logs --since 1m storagenode1 2>&1; sudo docker logs --since 1m storagenode2 2>&1`
 UPLOAD=$(echo "$LOG" | grep -c "upload started" | xargs -n 1 expr 60 \*)
 UPLOADED=$(echo "$LOG" | grep -c "uploaded" | xargs -n 1 expr 60 \*)
 UPLOADFAILED=$(echo "$LOG" | grep -c "upload [a-z]*led" | xargs -n 1 expr 60 \*)
@@ -677,7 +678,7 @@ RRDuVAL[7]='
 TCPU=$(cat /sys/class/thermal/thermal_zone0/temp | awk "{printf \"%.1f\", \$1/1000}")
 THDD=$(smartctl -d sat -a /dev/disk/by-id/usb-WD_Elements_25A3_5A324A5257504554-0:0 | grep "Celsius" | awk "{print \$10;}")
 TSSD=$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5e83a97f356e1138                    | grep "Celsius" | awk "{print \$10;}")
-echo "${TCPU}:${THDD}:${TSSD}"
+echo "${TCPU}:${THDD}:U"
 '
 RRDgUM[7]='Temperature'
 RRDgLIST[7]="42 44 45 46 47"
@@ -700,6 +701,69 @@ RRDgGRAPH[44]='86400|syshealth24|System temp, last day|[ "$H" = 04 ] && [ "$M" =
 RRDgGRAPH[45]='604800|syshealthW|System temp, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
 RRDgGRAPH[46]='2678400|syshealthM|System temp, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0'
 RRDgGRAPH[47]='31536000|syshealthY|System temp, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0'
+
+#------------------------------------------------------------------------
+# data definition: Free disk space per storj node
+#------------------------------------------------------------------------
+
+FILENAME="nodespace"
+GRAPHNAME="Free disk space per storj node"
+RRDcFILE[8]="${FILENAME}:60:${GRAPHNAME}"
+RRDcDEF[8]='
+DS:free0:DERIVE:300:-100000000000000:100000000000000
+DS:free1:DERIVE:300:-100000000000000:100000000000000
+DS:free2:DERIVE:300:-100000000000000:100000000000000
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:1d:10y
+'
+RRDuSRC[8]="free0:free1:free2"
+RRDuVAL[8]='
+echo -n $(docker logs --since 2m storagenode0 2>&1 | grep "Available Space" | tail -n 1 | sed "s/.*{/{/" | jq ".[\"Available Space\"]"):
+echo -n $(docker logs --since 2m storagenode1 2>&1 | grep "Available Space" | tail -n 1 | sed "s/.*{/{/" | jq ".[\"Available Space\"]"):
+echo -n $(docker logs --since 2m storagenode2 2>&1 | grep "Available Space" | tail -n 1 | sed "s/.*{/{/" | jq ".[\"Available Space\"]")
+'
+RRDgUM[8]='Disk space'
+RRDgLIST[8]="48 50 51 52 53"
+RRDgDEF[8]=$(cat <<EOF
+'DEF:free0=\$RRD:free0:AVERAGE'
+'DEF:free1=\$RRD:free1:AVERAGE'
+'DEF:free2=\$RRD:free2:AVERAGE'
+'CDEF:nfree0=free0,-1,*'
+'CDEF:nfree1=free1,-1,*'
+'CDEF:nfree2=free2,-1,*'
+'CDEF:lnfree0=free0,nfree0,UNKN,IF'
+'CDEF:lnfree1=free1,nfree1,nfree0,+,UNKN,IF'
+'CDEF:lnfree2=free2,nfree2,nfree1,nfree0,+,+,UNKN,IF'
+'AREA:nfree0#24BC14'
+'AREA:nfree1#CC7016::STACK'
+'AREA:nfree2#1598C3::STACK'
+'VDEF:tot0=nfree0,TOTAL'
+'LINE1:lnfree0#54EC48:node0'
+  GPRINT:nfree0:AVERAGE:"avg %1.2lf %s"
+  GPRINT:tot0:"total %1.2lf %s"
+  GPRINT:nfree0:LAST:"last %1.2lf %s/s\n"
+'VDEF:tot1=nfree1,TOTAL'
+'LINE1:lnfree1#EC9D48:node1'
+  GPRINT:nfree1:AVERAGE:"avg %1.2lf %s"
+  GPRINT:tot1:"total %1.2lf %s"
+  GPRINT:nfree1:LAST:"last %1.2lf %s/s\n"
+'VDEF:tot2=nfree2,TOTAL'
+'LINE1:lnfree2#48C4EC:node2'
+  GPRINT:nfree2:AVERAGE:"avg %1.2lf %s"
+  GPRINT:tot2:"total %1.2lf %s"
+  GPRINT:nfree2:LAST:"last %1.2lf %s/s\n"
+'HRULE:0#FFFFFF'
+EOF
+)
+
+RRDgGRAPH[48]="14400|${FILENAME}4|${GRAPHNAME}, last 4 hours|[ \"$M\" = 30 ]| --right-axis 1:0 --alt-y-grid"
+#RRDgGRAPH[43]='14400|syshealth6|System load, last 4 hours|[ "$M" = 30 ]'
+RRDgGRAPH[50]="86400|${FILENAME}24|${GRAPHNAME}, last day|[ \"\$H\" = 04 ] && [ \"\$M\" = 30 ]|--right-axis 1:0 --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H"
+RRDgGRAPH[51]="604800|${FILENAME}W|${GRAPHNAME}, last week|[ \"\$H\" = 04 ] && [ \"\$M\" = 30 ]|--right-axis 1:0 --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:\"%a %d/%m\""
+RRDgGRAPH[52]="2678400|${FILENAME}M|${GRAPHNAME}, last month|[ \"\$H\" = 04 ] && [ \"\$M\" = 30 ]|--right-axis 1:0 --alt-y-grid"
+RRDgGRAPH[53]="31536000|${FILENAME}Y|${GRAPHNAME}, last year|[ \"\$H\" = 04 ] && [ \"\$M\" = 30 ]|--right-axis 1:0 --alt-y-grid"
 
 
 ####################################################################
@@ -785,28 +849,24 @@ for N in "$@"; do
 					echo "<img src=\"${IMGBASE}.svg\"><br>" >> "$HTMLFILE"
 				done
 				echo "</center><p>RRDStorm for ${VERSION} / ${DATE}</p></body>" >> "$HTMLFILE"
-				# Creating the 4 hours file
-				DASHFILE="${RRDOUTPUT}/4h.html"
-				echo "<head><title>4 Hours dashboard</title>
+				# Creating timed dash files
+				for F in "4h:4 Hours dashboard:12 19 24 30 48 36 42" "1d:1 Day dashboard:13 20 26 32 50 38 44"; do
+				    TIMEDFILENAME=$(echo "$F"|cut -d':' -f1)
+				    TIMEDFILETITLE=$(echo "$F"|cut -d':' -f2)
+				    TIMEDFILESOURCES=$(echo "$F"|cut -d':' -f3)
+				    DASHFILE="${RRDOUTPUT}/${TIMEDFILENAME}.html"
+				    echo "<head><title>${TIMEDFILETITLE}</title>
 					<style>body{background:white;color:black}</style></head>
-					<body style=\"background-color:black;color:lightgray\"><h1>4 Hours dashboard</h1><center>" > "$DASHFILE"
-				for P in 12 19 24 30 36 42; do
+					<body style=\"background-color:black;color:lightgray\"><h1>${TIMEDFILETITLE}</h1><center>" > "$DASHFILE"
+				    for P in ${TIMEDFILESOURCES}; do
 					[ -z "${RRDgGRAPH[$P]}" ] && continue
 					IMGBASE=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f2)
-					echo "<img src=\"${IMGBASE}.svg\"><br>" >> "$DASHFILE"
+					HTMLFILEBASEINDEX=$(expr $P / 6)
+					HTMLFILEBASE=$(echo "${RRDcFILE[$HTMLFILEBASEINDEX]}"|cut -d':' -f1)
+					echo "<a href=\"${HTMLFILEBASE}.html\"><img src=\"${IMGBASE}.svg\"></a><br>" >> "$DASHFILE"
+				    done
+				    echo "</center><p>RRDStorm for ${VERSION} / ${DATE}</p></body>" >> "$DASHFILE"
 				done
-				echo "</center><p>RRDStorm for ${VERSION} / ${DATE}</p></body>" >> "$DASHFILE"
-				# Creating the 1 day file
-				DASHFILE="${RRDOUTPUT}/1d.html"
-				echo "<head><title>1 Day dashboard</title>
-					<style>body{background:white;color:black}</style></head>
-					<body style=\"background-color:black;color:lightgray\"><h1>1 Day dashboard</h1><center>" > "$DASHFILE"
-				for P in 13 20 26 32 38 44; do
-					[ -z "${RRDgGRAPH[$P]}" ] && continue
-					IMGBASE=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f2)
-					echo "<img src=\"${IMGBASE}.svg\"><br>" >> "$DASHFILE"
-				done
-				echo "</center><p>RRDStorm for ${VERSION} / ${DATE}</p></body>" >> "$DASHFILE"
 			}
 			# update the main HTML index
 			[ ! -z "$MAKEINDEX" ] && {
