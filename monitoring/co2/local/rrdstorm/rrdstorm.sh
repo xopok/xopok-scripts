@@ -273,6 +273,7 @@ RRDgDEF[2]=$(cat <<EOF
 'DEF:ds5=\$RRD:tempint:AVERAGE'
 'DEF:ds5k=\$RRD:tempkid:AVERAGE'
 'DEF:ds6=\$RRD:humint:AVERAGE'
+'DEF:ds6k=\$RRD:humkid:AVERAGE'
 'DEF:ds7=\$RRD:tempout:AVERAGE'
 'DEF:ds72=\$RRD:tempout2:AVERAGE'
 'DEF:ds7min=\$RRD:tempout:MIN'
@@ -282,6 +283,7 @@ RRDgDEF[2]=$(cat <<EOF
 'CDEF:scaled_ds5=ds5,20,*'
 'CDEF:scaled_ds5k=ds5k,20,*'
 'CDEF:scaled_ds6=ds6,20,*'
+'CDEF:scaled_ds6k=ds6k,20,*'
 'CDEF:scaled_ds7=ds7,20,*'
 'CDEF:scaled_ds72=ds72,20,*'
 'CDEF:scaled_ds7min=ds7min,20,*'
@@ -294,6 +296,8 @@ RRDgDEF[2]=$(cat <<EOF
 GPRINT:ds5k:LAST:"%3.1lf"
 'LINE1:scaled_ds5#a0a0a0:TInt '
 GPRINT:ds5:LAST:"%3.1lf"
+'LINE1:scaled_ds6k#B3F2FF:HumKid '
+GPRINT:ds6k:LAST:"%3.1lf"
 'LINE1:scaled_ds6#00ACCF:HumInt '
 GPRINT:ds6:LAST:"%3.1lf"
 'LINE2:ds1#5167b5:CO2'
