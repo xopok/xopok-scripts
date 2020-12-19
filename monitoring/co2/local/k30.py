@@ -15,7 +15,7 @@ parser.add_option("-d", "--device", dest="serial", default="serial0",
 (options, args) = parser.parse_args()
 
 device = "/dev/" + options.serial
-ser = serial.Serial(device, baudrate = 9600, timeout = .5)
+ser = serial.Serial(device)
 print("Serial " + device + " Connected!", file=sys.stderr)
 ser.flushInput()
 time.sleep(1)

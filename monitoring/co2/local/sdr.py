@@ -26,6 +26,6 @@ for line in sys.stdin:
 
   except:
     print("Error handling %s" % line)
-    with open('/place/sdr-errors', 'a+') as f:
+    with open('/dev/shm/sdr-errors', 'a+') as f:
       f.write("%s" % line)
     continue
