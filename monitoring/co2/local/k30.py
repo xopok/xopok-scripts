@@ -15,7 +15,7 @@ parser.add_option("-d", "--device", dest="serial", default="serial0",
 (options, args) = parser.parse_args()
 
 device = "/dev/" + options.serial
-ser = serial.Serial(device)
+ser = serial.Serial(device, timeout=2)
 print("Serial " + device + " Connected!", file=sys.stderr)
 ser.flushInput()
 time.sleep(1)
@@ -30,6 +30,9 @@ while True:
     #ser.write("\xFE\x44\x00\x08\x02\x9F\x25")
     time.sleep(.01)
     resp = ser.read(7)
+    if len(resp) < 7:
+        print("U")
+        sys.exit(1)
     # print("Resp: %d" % len(resp), file=sys.stderr)
     high = resp[3]
     low = resp[4]
