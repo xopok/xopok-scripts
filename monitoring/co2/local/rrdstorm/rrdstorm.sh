@@ -219,6 +219,7 @@ RRDgGRAPH[11]='31536000|memY|RAM usage, last year|[ "$H" = 04 ] && [ "$M" = 30 ]
 RRDcFILE[2]="temp:60:CO2, temperature and humidity"
 RRDcDEF[2]='
 DS:co2:GAUGE:120:0:10000
+DS:co2kid:GAUGE:120:0:10000
 DS:tempint:GAUGE:120:-273:100
 DS:tempkid:GAUGE:120:-273:100
 DS:tempout:GAUGE:120:-273:100
@@ -236,12 +237,10 @@ RRA:AVERAGE:0.5:1d:10y
 RRA:MAX:0.5:1d:10y
 RRA:MIN:0.5:1d:10y
 '
-RRDuSRC[2]="co2:humint:tempint:humout:tempout:humout2:tempout2:humkid:tempkid:humconv"
+RRDuSRC[2]="co2:co2kid:humint:tempint:humout:tempout:humout2:tempout2:humkid:tempkid:humconv"
 RRDuVAL[2]='
-#CO2FILE=/dev/shm/co2level
-#CO2LEVEL=`/home/pi/co2/k30.py -t 1`
-CO2LEVEL=U
-#echo "${CO2LEVEL}" > ${CO2FILE}
+CO2LEVEL=`/home/ubuntu/xopok-scripts/monitoring/co2/local/k30.py -t 1 -d ttyS0 | tee /dev/shm/co2level.tmp && mv -f /dev/shm/co2level.tmp /dev/shm/co2level`
+CO2KID=`sudo -u ubuntu ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.14 "/home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 3" || echo "U"`
 sudo -u ubuntu rsync -ax -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
 Calc()
 {
@@ -262,13 +261,14 @@ HUMCONV=`/home/ubuntu/xopok-scripts/monitoring/co2/local/humconv.py $HUMCONV`
 HUMTEMP=`echo ${HUMTEMP} | sed "s/ /:/g"`
 TEMPOUT=`echo ${HUMTEMPOUT} | sed "s/.* //"`
 
-echo "${CO2LEVEL}:${HUMTEMP}:${HUMCONV}"
+echo "${CO2LEVEL}:${CO2KID}:${HUMTEMP}:${HUMCONV}"
 '
 
 RRDgUM[2]='ppm'
 RRDgLIST[2]="12 13 14 15 16 17"
 RRDgDEF[2]=$(cat <<EOF
 'DEF:ds1=\$RRD:co2:AVERAGE'
+'DEF:ds1kid=\$RRD:co2kid:AVERAGE'
 'DEF:ds4=\$RRD:humconv:AVERAGE'
 'DEF:ds5=\$RRD:tempint:AVERAGE'
 'DEF:ds5k=\$RRD:tempkid:AVERAGE'
@@ -300,7 +300,7 @@ GPRINT:ds5:LAST:"%3.1lf"
 GPRINT:ds6k:LAST:"%3.1lf"
 'LINE1:scaled_ds6#00ACCF:HumInt '
 GPRINT:ds6:LAST:"%3.1lf"
-'LINE2:ds1#5167b5:CO2'
+'LINE2:ds1#8B9AFE:CO2'
 GPRINT:ds1:LAST:"%4.0lf\n"
 'LINE1:scaled_ds7#309030:TWest'
 GPRINT:ds7:LAST:"%3.1lf"
@@ -312,6 +312,8 @@ GPRINT:ds8:LAST:"%3.1lf"
 'LINE1:scaled_ds7max#ff0000'
 'LINE1:scaled_ds4#ffffff:HumConv:dashes=4,2'
 GPRINT:ds4:LAST:"%3.1lf\n"
+'LINE2:ds1kid#a9f573:CO2Kid'
+GPRINT:ds1kid:LAST:"%4.0lf\n"
 EOF
 )
 
