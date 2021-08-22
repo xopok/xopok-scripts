@@ -239,9 +239,9 @@ RRA:MIN:0.5:1d:10y
 '
 RRDuSRC[2]="co2:co2kid:humint:tempint:humout:tempout:humout2:tempout2:humkid:tempkid:humconv"
 RRDuVAL[2]='
-CO2LEVEL=`/home/ubuntu/xopok-scripts/monitoring/co2/local/k30.py -t 1 -d ttyS0 | tee /dev/shm/co2level.tmp && mv -f /dev/shm/co2level.tmp /dev/shm/co2level`
-CO2KID=`sudo -u ubuntu ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.14 "/home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 3" || echo "U"`
-sudo -u ubuntu rsync -ax -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
+CO2LEVEL=U #`/home/vlysenkov/xopok-scripts/monitoring/co2/local/k30.py -t 1 -d ttyS0 | tee /dev/shm/co2level.tmp && mv -f /dev/shm/co2level.tmp /dev/shm/co2level`
+CO2KID=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.14 "/home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 3" || echo "U"`
+sudo -u vlysenkov rsync -ax -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
 Calc()
 {
 if [ -f "$1" ] && [ `stat --format=%Y $1` -ge $(( `date +%s` - 120 )) ]; then
@@ -257,7 +257,7 @@ HUMTEMPKID=`cat /dev/shm/sdr-Nexus-TH-51-3`
 HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT} ${HUMTEMPOUT2} ${HUMTEMPKID}`
 HUMCONV=$(echo "$HUMTEMP"| awk "{print \$3\" \"\$4\" \"\$2}")
 echo $HUMCONV > /tmp/conv
-HUMCONV=`/home/ubuntu/xopok-scripts/monitoring/co2/local/humconv.py $HUMCONV`
+HUMCONV=`/home/vlysenkov/xopok-scripts/monitoring/co2/local/humconv.py $HUMCONV`
 HUMTEMP=`echo ${HUMTEMP} | sed "s/ /:/g"`
 TEMPOUT=`echo ${HUMTEMPOUT} | sed "s/.* //"`
 
@@ -349,10 +349,10 @@ RRA:AVERAGE:0.5:1h:1M
 RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[3]="ar:arm:ars:aw:awm:aws:br:brm:brs:bw:bwm:bws"
-#echo $(cat /sys/block/`readlink /dev/disk/by-id/ata-OCZ-VERTEX2_OCZ-4LNRT8Q4D5JSE37Q | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
+#echo U:U:U:U:U:U
 RRDuVAL[3]='
-echo -n $(cat /sys/block/`readlink /dev/disk/by-id/usb-WD_Elements_25A3_5A324A5257504554-0\:0 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
-echo U:U:U:U:U:U
+echo -n $(cat /sys/block/`readlink /dev/disk/by-id/ata-WDC_WD140EMFZ-11A0WA0_Z2JRWPET | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
+echo    $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5e83a97f356e1138 |             sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
 '
 RRDgUM[3]='SSD <-- requests/s --> HDD'
 RRDgLIST[3]="19 20 21 22 23"
@@ -448,7 +448,7 @@ DOWNLOADFAILED=$(echo "$LOG" | grep -c "download failed" | xargs -n 1 expr 60 \*
 AUDIT=$(echo "$LOG" | grep -c "download started.*GET_AUDIT" | xargs -n 1 expr 60 \*)
 AUDITED=$(echo "$LOG" | grep -c "downloaded.*GET_AUDIT" | xargs -n 1 expr 60 \*)
 AUDITFAILED=$(echo "$LOG" | grep -c "download failed.*GET_AUDIT" | xargs -n 1 expr 60 \*)
-DELETED=$(echo "$LOG" | grep -c "deleted" | xargs -n 1 expr 60 \*)
+DELETED=$(echo "$LOG" | grep -c "delete " | xargs -n 1 expr 60 \*)
 echo "${UPLOAD}:${UPLOADED}:${UPLOADFAILED}:${DOWNLOAD}:${DOWNLOADED}:${DOWNLOADFAILED}:${AUDIT}:${AUDITED}:${AUDITFAILED}:${DELETED}"
 '
 RRDgUM[4]='Downloads <-- pieces/min --> Uploads'
@@ -535,11 +535,10 @@ RRA:AVERAGE:0.5:1d:10y
 RRDuSRC[5]="rootfree:rootused:placefree:placeused:placestorj"
 RRDuVAL[5]='
 echo -n $(df -B1 / | tail -n 1 | awk "{print \$4\":\"\$3}"):
-echo -n $(df -B1 /place | tail -n 1 | awk "{print \$4\":\"\$3}"):
-STORAGE=/place/storj
-TOTAL=$(df -B1 /place | tail -n 1 | awk "{ print \$3; }")
-OTHER=$(du -sx -B1 --exclude "${STORAGE}*" /place | awk "{ print \$1; }")
-echo $(expr $TOTAL - $OTHER)
+echo -n $(df -B1 /place? | tail -n +2 | awk "{ s = s + \$4; } END { printf \"%17.0f\", s; }"):
+TOTAL=$(df -B1 /place? | tail -n +2 | awk "{ s = s + \$3; } END { printf \"%17.0f\", s; }")
+OTHER=$(du -sx -B1 --exclude "/place?/storj*" /place? | awk "{ s = s + \$1; } END { printf \"%17.0f\", s; }")
+echo ${TOTAL}:$(expr $TOTAL - $OTHER)
 '
 #RRDgUM[5]='/root (x100) <- 0 -> /place'
 RRDgUM[5]='/place/storj?'
@@ -565,10 +564,10 @@ GPRINT:rfg:LAST:"/ free %4.0lf M\n"
 'CDEF:lnpu=pu,pu,UNKN,IF'
 'CDEF:lnpf=pu,pf,pu,+,UNKN,IF'
 'CDEF:puns=pu,ps,-'
-'AREA:ps#1598C3:/place/storj.v3 used'
+'AREA:ps#1598C3:/place?/storj? used'
 GPRINT:psg:LAST:"%4.0lf M"
-GPRINT:pug:LAST:"/place used %4.0lf M"
-GPRINT:pfg:LAST:"/place free %4.0lf M"
+GPRINT:pug:LAST:"/place? used %4.0lf M"
+GPRINT:pfg:LAST:"/place? free %4.0lf M"
 'LINE1:ps#48C4EC'
 EOF
 )
@@ -610,7 +609,7 @@ RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[6]="in:out:dockin:dockout"
 RRDuVAL[6]='
-IF="eth0:"
+IF="eno0:"
 IN=$(grep "${IF}" /proc/net/dev|awk -F ":" "{print \$2}"|awk "{print \$1}")
 OUT=$(grep "${IF}" /proc/net/dev|awk -F ":" "{print \$2}"|awk "{print \$9}")
 IF="docker0:"
@@ -682,9 +681,9 @@ RRA:MIN:0.5:1d:10y
 RRDuSRC[7]="tcpu:thdd:tssd"
 RRDuVAL[7]='
 TCPU=$(cat /sys/class/thermal/thermal_zone0/temp | awk "{printf \"%.1f\", \$1/1000}")
-THDD=$(smartctl -d sat -a /dev/disk/by-id/usb-WD_Elements_25A3_5A324A5257504554-0:0 | grep "Celsius" | awk "{print \$10;}")
-TSSD=$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5e83a97f356e1138                    | grep "Celsius" | awk "{print \$10;}")
-echo "${TCPU}:${THDD}:U"
+THDD=$(smartctl -d sat -a /dev/disk/by-id/ata-WDC_WD140EMFZ-11A0WA0_Z2JRWPET | grep "Celsius" | awk "{print \$10;}")
+TSSD=U #$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5e83a97f356e1138             | grep "Celsius" | awk "{print \$10;}")
+echo "${TCPU}:${THDD}:${TSSD}"
 '
 RRDgUM[7]='Temperature'
 RRDgLIST[7]="42 44 45 46 47"
