@@ -240,7 +240,7 @@ RRA:MIN:0.5:1d:10y
 RRDuSRC[2]="co2:co2kid:humint:tempint:humout:tempout:humout2:tempout2:humkid:tempkid:humconv"
 RRDuVAL[2]='
 CO2LEVEL=U #`/home/vlysenkov/xopok-scripts/monitoring/co2/local/k30.py -t 1 -d ttyS0 | tee /dev/shm/co2level.tmp && mv -f /dev/shm/co2level.tmp /dev/shm/co2level`
-CO2KID=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.14 "/home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 3" || echo "U"`
+CO2KID=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.14 "/home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 1" || echo "U"`
 sudo -u vlysenkov rsync -ax -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
 Calc()
 {
@@ -351,8 +351,8 @@ RRA:AVERAGE:0.5:1d:10y
 RRDuSRC[3]="ar:arm:ars:aw:awm:aws:br:brm:brs:bw:bwm:bws"
 #echo U:U:U:U:U:U
 RRDuVAL[3]='
-echo -n $(cat /sys/block/`readlink /dev/disk/by-id/ata-WDC_WD140EMFZ-11A0WA0_Z2JRWPET | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
-echo    $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5e83a97f356e1138 |             sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
+echo -n $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca28de6971f | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
+echo    $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5e83a97f356e1138 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
 '
 RRDgUM[3]='SSD <-- requests/s --> HDD'
 RRDgLIST[3]="19 20 21 22 23"
@@ -609,7 +609,7 @@ RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[6]="in:out:dockin:dockout"
 RRDuVAL[6]='
-IF="eno0:"
+IF="eno1:"
 IN=$(grep "${IF}" /proc/net/dev|awk -F ":" "{print \$2}"|awk "{print \$1}")
 OUT=$(grep "${IF}" /proc/net/dev|awk -F ":" "{print \$2}"|awk "{print \$9}")
 IF="docker0:"
@@ -681,8 +681,8 @@ RRA:MIN:0.5:1d:10y
 RRDuSRC[7]="tcpu:thdd:tssd"
 RRDuVAL[7]='
 TCPU=$(cat /sys/class/thermal/thermal_zone0/temp | awk "{printf \"%.1f\", \$1/1000}")
-THDD=$(smartctl -d sat -a /dev/disk/by-id/ata-WDC_WD140EMFZ-11A0WA0_Z2JRWPET | grep "Celsius" | awk "{print \$10;}")
-TSSD=U #$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5e83a97f356e1138             | grep "Celsius" | awk "{print \$10;}")
+THDD=$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5000cca28de6971f | grep "Celsius" | awk "{print \$10;}")
+TSSD=$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5000cca264d3b9b0 | grep "Celsius" | awk "{print \$10;}")
 echo "${TCPU}:${THDD}:${TSSD}"
 '
 RRDgUM[7]='Temperature'
@@ -693,9 +693,9 @@ RRDgDEF[7]=$(cat <<EOF
 'DEF:tssd=\$RRD:tssd:AVERAGE'
 'LINE1:tcpu#FF0000:t CPU'
   GPRINT:tcpu:LAST:" %.2lf\n"
-'LINE1:thdd#00FF00:t HDD'
+'LINE1:thdd#00FF00:t HDD1'
   GPRINT:thdd:LAST:" %.0lf\n"
-'LINE1:tssd#00ACCF:t SSD'
+'LINE1:tssd#00ACCF:t HDD2'
   GPRINT:tssd:LAST:" %.0lf\n"
 EOF
 )
