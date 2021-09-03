@@ -421,11 +421,11 @@ GPRINT:sw:AVERAGE:"w/s %.2lf"
 GPRINT:srkb:AVERAGE:"| rkB/s %.2lf"
 'CDEF:srgb=srkb,1024,/,1024,/'
 'VDEF:totsrgb=srgb,TOTAL'
-GPRINT:totsrgb:"Ttl %.2lf GiB"
+GPRINT:totsrgb:"Σ %.2lf GiB"
 GPRINT:swkb:AVERAGE:"| wkB/s %.2lf"
 'CDEF:swgb=swkb,1024,/,1024,/'
 'VDEF:totswbb=swgb,TOTAL'
-GPRINT:totswbb:"Ttl %.2lf GiB\n"
+GPRINT:totswbb:"Σ %.2lf GiB\n"
 'HRULE:0#FFFFFF'
 EOF
 )
