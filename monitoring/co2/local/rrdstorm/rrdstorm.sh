@@ -388,44 +388,44 @@ RRDgDEF[3]=$(cat <<EOF
 'CDEF:bwkb=bws,2,/'
 'CDEF:srkb=srs,2,/'
 'CDEF:swkb=sws,2,/'
-'LINE1:ar#54EC48:HDD1 avg r/s'
+'LINE1:ar#54EC48:HDD1 ⌀ r/s'
 GPRINT:ar:AVERAGE:"%.2lf"
 'LINE1:aw#EA644A:w/s'
 GPRINT:aw:AVERAGE:"%.2lf"
-'LINE2:sars#24BC14:rkB/s'
+'LINE2:sars#24BC14:rK/s'
 GPRINT:arkb:AVERAGE:"%.2lf"
 'CDEF:argb=arkb,1024,/,1024,/'
 'VDEF:totargb=argb,TOTAL'
-GPRINT:totargb:"%.2lf GiB"
-'LINE2:saws#CC3118:wkB/s'
+GPRINT:totargb:"Σ%.2lf GiB"
+'LINE2:saws#CC3118:wK/s'
 GPRINT:awkb:AVERAGE:"%.2lf"
 'CDEF:awgb=awkb,1024,/,1024,/'
 'VDEF:totawgb=awgb,TOTAL'
-GPRINT:totawgb:"%.2lf GiB\n"
-'LINE1:nbr#54EC48:HDD2 avg r/s'
+GPRINT:totawgb:"Σ%.2lf GiB\n"
+'LINE1:nbr#54EC48:HDD2 ⌀ r/s'
 GPRINT:br:AVERAGE:"%.2lf"
 'LINE1:nbw#EA644A:w/s'
 GPRINT:bw:AVERAGE:"%.2lf"
-'LINE2:snbrs#24BC14:rkB/s'
+'LINE2:snbrs#24BC14:rK/s'
 GPRINT:brkb:AVERAGE:"%.2lf"
 'CDEF:brgb=brkb,1024,/,1024,/'
 'VDEF:totbrgb=brgb,TOTAL'
-GPRINT:totbrgb:"%.2lf GiB"
-'LINE2:snbws#CC3118:wkB/s'
+GPRINT:totbrgb:"Σ%.2lf GiB"
+'LINE2:snbws#CC3118:wK/s'
 GPRINT:bwkb:AVERAGE:"%.2lf"
 'CDEF:bwgb=bwkb,1024,/,1024,/'
 'VDEF:totbwbb=bwgb,TOTAL'
-GPRINT:totbwbb:"%.2lf GiB\n"
-GPRINT:sr:AVERAGE:"SSD avg r/s %.2lf"
+GPRINT:totbwbb:"Σ%.2lf GiB\n"
+GPRINT:sr:AVERAGE:"SSD ⌀ r/s %.2lf"
 GPRINT:sw:AVERAGE:"w/s %.2lf"
-GPRINT:srkb:AVERAGE:"| rkB/s %.2lf"
+GPRINT:srkb:AVERAGE:"| rK/s %.2lf"
 'CDEF:srgb=srkb,1024,/,1024,/'
 'VDEF:totsrgb=srgb,TOTAL'
-GPRINT:totsrgb:"Σ %.2lf GiB"
-GPRINT:swkb:AVERAGE:"| wkB/s %.2lf"
+GPRINT:totsrgb:"Σ%.2lf GiB"
+GPRINT:swkb:AVERAGE:"| wK/s %.2lf"
 'CDEF:swgb=swkb,1024,/,1024,/'
 'VDEF:totswbb=swgb,TOTAL'
-GPRINT:totswbb:"Σ %.2lf GiB\n"
+GPRINT:totswbb:"Σ%.2lf GiB\n"
 'HRULE:0#FFFFFF'
 EOF
 )
