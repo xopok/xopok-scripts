@@ -343,28 +343,39 @@ DS:brm:DERIVE:120:0:U
 DS:bwm:DERIVE:120:0:U
 DS:brs:DERIVE:120:0:U
 DS:bws:DERIVE:120:0:U
+DS:cr:DERIVE:120:0:U
+DS:cw:DERIVE:120:0:U
+DS:crm:DERIVE:120:0:U
+DS:cwm:DERIVE:120:0:U
+DS:crs:DERIVE:120:0:U
+DS:cws:DERIVE:120:0:U
 RRA:AVERAGE:0.5:1m:1d
 RRA:AVERAGE:0.5:10m:1w
 RRA:AVERAGE:0.5:1h:1M
 RRA:AVERAGE:0.5:1d:10y
 '
-RRDuSRC[3]="ar:arm:ars:aw:awm:aws:br:brm:brs:bw:bwm:bws"
+RRDuSRC[3]="ar:arm:ars:aw:awm:aws:cr:crm:crs:cw:cwm:cws:br:brm:brs:bw:bwm:bws"
 #echo U:U:U:U:U:U
 RRDuVAL[3]='
 echo -n $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca28de6971f | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
+echo -n $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca264d3b9b0 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
 echo    $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5e83a97f356e1138 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
 '
-RRDgUM[3]='SSD <-- requests/s --> HDD'
+RRDgUM[3]='HDD2 <-- requests/s --> HDD1'
 RRDgLIST[3]="19 20 21 22 23"
 RRDgDEF[3]=$(cat <<EOF
 'DEF:ar=\$RRD:ar:AVERAGE'
 'DEF:aw=\$RRD:aw:AVERAGE'
 'DEF:ars=\$RRD:ars:AVERAGE'
 'DEF:aws=\$RRD:aws:AVERAGE'
-'DEF:br=\$RRD:br:AVERAGE'
-'DEF:bw=\$RRD:bw:AVERAGE'
-'DEF:brs=\$RRD:brs:AVERAGE'
-'DEF:bws=\$RRD:bws:AVERAGE'
+'DEF:br=\$RRD:cr:AVERAGE'
+'DEF:bw=\$RRD:cw:AVERAGE'
+'DEF:brs=\$RRD:crs:AVERAGE'
+'DEF:bws=\$RRD:cws:AVERAGE'
+'DEF:sr=\$RRD:br:AVERAGE'
+'DEF:sw=\$RRD:bw:AVERAGE'
+'DEF:srs=\$RRD:brs:AVERAGE'
+'DEF:sws=\$RRD:bws:AVERAGE'
 'CDEF:nbr=br,-1,*'
 'CDEF:nbw=bw,-1,*'
 'CDEF:snbrs=brs,-1,*,2048,/,16,*'
@@ -375,7 +386,9 @@ RRDgDEF[3]=$(cat <<EOF
 'CDEF:awkb=aws,2,/'
 'CDEF:brkb=brs,2,/'
 'CDEF:bwkb=bws,2,/'
-'LINE1:ar#54EC48:HDD avg r/s'
+'CDEF:srkb=srs,2,/'
+'CDEF:swkb=sws,2,/'
+'LINE1:ar#54EC48:HDD1 avg r/s'
 GPRINT:ar:AVERAGE:"%.2lf"
 'LINE1:aw#EA644A:w/s'
 GPRINT:aw:AVERAGE:"%.2lf"
@@ -389,7 +402,7 @@ GPRINT:awkb:AVERAGE:"%.2lf"
 'CDEF:awgb=awkb,1024,/,1024,/'
 'VDEF:totawgb=awgb,TOTAL'
 GPRINT:totawgb:"%.2lf GiB\n"
-'LINE1:nbr#54EC48:SSD avg r/s'
+'LINE1:nbr#54EC48:HDD2 avg r/s'
 GPRINT:br:AVERAGE:"%.2lf"
 'LINE1:nbw#EA644A:w/s'
 GPRINT:bw:AVERAGE:"%.2lf"
@@ -403,6 +416,16 @@ GPRINT:bwkb:AVERAGE:"%.2lf"
 'CDEF:bwgb=bwkb,1024,/,1024,/'
 'VDEF:totbwbb=bwgb,TOTAL'
 GPRINT:totbwbb:"%.2lf GiB\n"
+GPRINT:sr:AVERAGE:"SSD avg r/s %.2lf"
+GPRINT:sw:AVERAGE:"w/s %.2lf"
+GPRINT:srkb:AVERAGE:"| rkB/s %.2lf"
+'CDEF:srgb=srkb,1024,/,1024,/'
+'VDEF:totsrgb=srgb,TOTAL'
+GPRINT:totsrgb:"Ttl %.2lf GiB"
+GPRINT:swkb:AVERAGE:"| wkB/s %.2lf"
+'CDEF:swgb=swkb,1024,/,1024,/'
+'VDEF:totswbb=swgb,TOTAL'
+GPRINT:totswbb:"Ttl %.2lf GiB\n"
 'HRULE:0#FFFFFF'
 EOF
 )
