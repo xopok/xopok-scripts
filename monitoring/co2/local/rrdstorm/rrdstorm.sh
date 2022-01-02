@@ -251,7 +251,7 @@ else
 fi
 }
 HUMTEMPINT=`cat /dev/shm/sdr-Nexus-TH-51-1`
-HUMTEMPOUT=$(Calc /dev/shm/sdr-Nexus-TH-51-2)
+HUMTEMPOUT=$(Calc /dev/shm/sdr-Nexus-TH-240-2)
 HUMTEMPOUT2=$(Calc /dev/shm/sdr-Hideki-TS04-3-2)
 HUMTEMPKID=`cat /dev/shm/sdr-Nexus-TH-51-3`
 HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT} ${HUMTEMPOUT2} ${HUMTEMPKID}`
@@ -361,7 +361,7 @@ echo -n $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca28de6971f | sed 
 echo -n $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca264d3b9b0 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
 echo    $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5e83a97f356e1138 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
 '
-RRDgUM[3]='HDD2 <-- requests/s --> HDD1'
+RRDgUM[3]='storj1 <-- HDD requests/s --> storj2'
 RRDgLIST[3]="19 20 21 22 23"
 RRDgDEF[3]=$(cat <<EOF
 'DEF:ar=\$RRD:ar:AVERAGE'
