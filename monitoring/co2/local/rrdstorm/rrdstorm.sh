@@ -239,7 +239,8 @@ RRA:MIN:0.5:1d:10y
 '
 RRDuSRC[2]="co2:co2kid:humint:tempint:humout:tempout:humout2:tempout2:humkid:tempkid:humconv"
 RRDuVAL[2]='
-CO2LEVEL=U #`/home/vlysenkov/xopok-scripts/monitoring/co2/local/k30.py -t 1 -d ttyS0 | tee /dev/shm/co2level.tmp && mv -f /dev/shm/co2level.tmp /dev/shm/co2level`
+#CO2LEVEL=U #`/home/vlysenkov/xopok-scripts/monitoring/co2/local/k30.py -t 1 -d ttyS0 | tee /dev/shm/co2level.tmp && mv -f /dev/shm/co2level.tmp /dev/shm/co2level`
+CO2LEVEL=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.13 "cd /home/pi/xopok-scripts; git stash >/dev/null; git pull>/dev/null; /home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 1" || echo "U"`
 CO2KID=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.14 "/home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 1" || echo "U"`
 sudo -u vlysenkov rsync -ax -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
 Calc()
@@ -250,10 +251,10 @@ else
   echo "U U"
 fi
 }
-HUMTEMPINT=`cat /dev/shm/sdr-Nexus-TH-51-1`
+HUMTEMPINT=$(Calc /dev/shm/sdr-Nexus-TH-81-1)
 HUMTEMPOUT=$(Calc /dev/shm/sdr-Nexus-TH-240-2)
 HUMTEMPOUT2=$(Calc /dev/shm/sdr-Hideki-TS04-3-2)
-HUMTEMPKID=`cat /dev/shm/sdr-Nexus-TH-51-3`
+HUMTEMPKID=$(Calc /dev/shm/sdr-Nexus-TH-51-3)
 HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT} ${HUMTEMPOUT2} ${HUMTEMPKID}`
 HUMCONV=$(echo "$HUMTEMP"| awk "{print \$3\" \"\$4\" \"\$2}")
 echo $HUMCONV > /tmp/conv
@@ -461,7 +462,7 @@ RRA:AVERAGE:0.5:144:1460
 '
 RRDuSRC[4]="upload:uploaded:uploadfailed:download:downloaded:downloadfailed:audit:audited:auditfailed:deleted"
 RRDuVAL[4]='
-LOG=`sudo docker logs --since 1m storagenode0 2>&1; sudo docker logs --since 1m storagenode1 2>&1; sudo docker logs --since 1m storagenode2 2>&1`
+LOG=`sudo docker logs --since 1m storagenode0 2>&1; sudo docker logs --since 1m storagenode1 2>&1; sudo docker logs --since 1m storagenode2 2>&1; sudo docker logs --since 1m storagenode3 2>&1`
 UPLOAD=$(echo "$LOG" | grep -c "upload started" | xargs -n 1 expr 60 \*)
 UPLOADED=$(echo "$LOG" | grep -c "uploaded" | xargs -n 1 expr 60 \*)
 UPLOADFAILED=$(echo "$LOG" | grep -c "upload [a-z]*led" | xargs -n 1 expr 60 \*)
