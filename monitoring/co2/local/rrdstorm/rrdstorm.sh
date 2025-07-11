@@ -240,9 +240,10 @@ RRA:MIN:0.5:1d:10y
 RRDuSRC[2]="co2:co2kid:humint:tempint:humout:tempout:humout2:tempout2:humkid:tempkid:humconv"
 RRDuVAL[2]='
 #CO2LEVEL=U #`/home/vlysenkov/xopok-scripts/monitoring/co2/local/k30.py -t 1 -d ttyS0 | tee /dev/shm/co2level.tmp && mv -f /dev/shm/co2level.tmp /dev/shm/co2level`
-CO2LEVEL=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.13 "cd /home/pi/xopok-scripts; git stash >/dev/null; git pull>/dev/null; /home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 1" || echo "U"`
-CO2KID=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.0.14 "/home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 1" || echo "U"`
-sudo -u vlysenkov rsync -ax -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.0.13:/dev/shm/sdr*" /dev/shm/
+CO2LEVEL=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.50.13 "[ -f /tmp/k30.upd ] || ( cd /home/pi/xopok-scripts; git stash>/dev/null; git pull>/dev/null; touch /tmp/k30.upd; ) ; /home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 1" || echo "U"`
+CO2KID=`sudo -u vlysenkov ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2 -l pi 192.168.50.14 "/home/pi/xopok-scripts/monitoring/co2/local/k30.py -t 3 -d ttyS0" || echo "U"`
+CO2KID=`[ $CO2KID -eq 0 ] && echo "U" || echo $CO2KID`
+#sudo -u vlysenkov rsync -ax -e "ssh -o ConnectTimeout=2 -o ServerAliveInterval=2 -ServerAliveCountMax=2" "pi@192.168.50.13:/dev/shm/sdr*" /dev/shm/
 Calc()
 {
 if [ -f "$1" ] && [ `stat --format=%Y $1` -ge $(( `date +%s` - 120 )) ]; then
@@ -251,13 +252,13 @@ else
   echo "U U"
 fi
 }
-HUMTEMPINT=$(Calc /dev/shm/sdr-Nexus-TH-81-1)
-HUMTEMPOUT=$(Calc /dev/shm/sdr-Nexus-TH-240-2)
-HUMTEMPOUT2=$(Calc /dev/shm/sdr-Hideki-TS04-3-2)
-HUMTEMPKID=$(Calc /dev/shm/sdr-Nexus-TH-51-3)
+HUMTEMPINT=$(Calc /dev/shm/sdr-Nexus-TH-95-1)
+HUMTEMPOUT=$(Calc /dev/shm/sdr-Nexus-TH-245-2)
+HUMTEMPOUT2=$(Calc /dev/shm/sdr-Nexus-TH-48-2)
+HUMTEMPKID=$(Calc /dev/shm/sdr-Nexus-TH-101-3)
 HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT} ${HUMTEMPOUT2} ${HUMTEMPKID}`
-HUMCONV=$(echo "$HUMTEMP"| awk "{print \$3\" \"\$4\" \"\$2}")
-echo $HUMCONV > /tmp/conv
+HUMCONV=$(echo "$HUMTEMP"| awk "{print \$3\" \"\$4\" \"\$8}")
+#echo $HUMTEMP > /tmp/conv
 HUMCONV=`/home/vlysenkov/xopok-scripts/monitoring/co2/local/humconv.py $HUMCONV`
 HUMTEMP=`echo ${HUMTEMP} | sed "s/ /:/g"`
 TEMPOUT=`echo ${HUMTEMPOUT} | sed "s/.* //"`
@@ -350,19 +351,26 @@ DS:crm:DERIVE:120:0:U
 DS:cwm:DERIVE:120:0:U
 DS:crs:DERIVE:120:0:U
 DS:cws:DERIVE:120:0:U
+DS:dr:DERIVE:120:0:U
+DS:dw:DERIVE:120:0:U
+DS:drm:DERIVE:120:0:U
+DS:dwm:DERIVE:120:0:U
+DS:drs:DERIVE:120:0:U
+DS:dws:DERIVE:120:0:U
 RRA:AVERAGE:0.5:1m:1d
 RRA:AVERAGE:0.5:10m:1w
 RRA:AVERAGE:0.5:1h:1M
 RRA:AVERAGE:0.5:1d:10y
 '
-RRDuSRC[3]="ar:arm:ars:aw:awm:aws:cr:crm:crs:cw:cwm:cws:br:brm:brs:bw:bwm:bws"
+RRDuSRC[3]="ar:arm:ars:aw:awm:aws:cr:crm:crs:cw:cwm:cws:br:brm:brs:bw:bwm:bws:dr:drm:drs:dw:dwm:dws"
 #echo U:U:U:U:U:U
 RRDuVAL[3]='
 echo -n $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca28de6971f | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
 echo -n $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca264d3b9b0 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
-echo    $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5e83a97f356e1138 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
+echo -n $(cat /sys/block/`readlink /dev/disk/by-id/nvme-eui.002538b631b35148 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
+echo    $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca2a1f3cc93 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
 '
-RRDgUM[3]='storj1 <-- HDD requests/s --> storj2'
+RRDgUM[3]='hdd1 <-- requests/s --> hdd2'
 RRDgLIST[3]="19 20 21 22 23"
 RRDgDEF[3]=$(cat <<EOF
 'DEF:ar=\$RRD:ar:AVERAGE'
@@ -432,11 +440,11 @@ EOF
 )
 
 #RRDgGRAPH[18]='3600|cpu1|CPU usage, last hour|[ "$M" = 30 ]|-l 0 -r -u 99.99'
-RRDgGRAPH[19]='14400|disks4|Disks IO usage, last 4 hours|[ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s" --alt-y-grid'
-RRDgGRAPH[20]='86400|disks24|Disks IO usage, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 65536:0 --right-axis-label "B/s"'
-RRDgGRAPH[21]='604800|disksW|Disks IO usage, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" --right-axis 65536:0 --right-axis-label "B/s"'
-RRDgGRAPH[22]='2678400|disksM|Disks IO usage, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
-RRDgGRAPH[23]='31536000|disksY|Disks IO usage, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[19]='14400|disks4|Disks 1+2 IO usage, last 4 hours|[ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s" --alt-y-grid'
+RRDgGRAPH[20]='86400|disks24|Disks 1+2 IO usage, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[21]='604800|disksW|Disks 1+2 IO usage, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[22]='2678400|disksM|Disks 1+2 IO usage, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[23]='31536000|disksY|Disks 1+2 IO usage, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
 
 #-------------------------------------------------------------------
 # data definition: Storj upload and download statistics
@@ -455,10 +463,10 @@ DS:audit:ABSOLUTE:600:0:U
 DS:audited:ABSOLUTE:600:0:U
 DS:auditfailed:ABSOLUTE:600:0:U
 DS:deleted:ABSOLUTE:600:0:U
-RRA:AVERAGE:0.5:1:576
-RRA:AVERAGE:0.5:6:672
-RRA:AVERAGE:0.5:24:732
-RRA:AVERAGE:0.5:144:1460
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[4]="upload:uploaded:uploadfailed:download:downloaded:downloadfailed:audit:audited:auditfailed:deleted"
 RRDuVAL[4]='
@@ -559,9 +567,9 @@ RRA:AVERAGE:0.5:1d:10y
 RRDuSRC[5]="rootfree:rootused:placefree:placeused:placestorj"
 RRDuVAL[5]='
 echo -n $(df -B1 / | tail -n 1 | awk "{print \$4\":\"\$3}"):
-echo -n $(df -B1 /place? | tail -n +2 | awk "{ s = s + \$4; } END { printf \"%17.0f\", s; }"):
-TOTAL=$(df -B1 /place? | tail -n +2 | awk "{ s = s + \$3; } END { printf \"%17.0f\", s; }")
-OTHER=$(du -sx -B1 --exclude "/place?/storj*" /place? | awk "{ s = s + \$1; } END { printf \"%17.0f\", s; }")
+echo -n $(df -B1 /place[1-9] | tail -n +2 | awk "{ s = s + \$4; } END { printf \"%17.0f\", s; }"):
+TOTAL=$(df -B1 /place[1-9] | tail -n +2 | awk "{ s = s + \$3; } END { printf \"%17.0f\", s; }")
+OTHER=$(du -sx -B1 --exclude "/place[1-9]/storj*" /place[1-9] | awk "{ s = s + \$1; } END { printf \"%17.0f\", s; }")
 echo ${TOTAL}:$(expr $TOTAL - $OTHER)
 '
 #RRDgUM[5]='/root (x100) <- 0 -> /place'
@@ -749,7 +757,7 @@ RRA:AVERAGE:0.5:1d:10y
 '
 RRDuSRC[8]="free0:free1:free2"
 RRDuVAL[8]='
-echo -n $(docker logs --since 2m storagenode0 2>&1 | grep "Available Space" | tail -n 1 | sed "s/.*{/{/" | jq ".[\"Available Space\"]"):
+echo -n $(docker logs --since 2m storagenode3 2>&1 | grep "Available Space" | tail -n 1 | sed "s/.*{/{/" | jq ".[\"Available Space\"]"):
 echo -n $(docker logs --since 2m storagenode1 2>&1 | grep "Available Space" | tail -n 1 | sed "s/.*{/{/" | jq ".[\"Available Space\"]"):
 echo -n $(docker logs --since 2m storagenode2 2>&1 | grep "Available Space" | tail -n 1 | sed "s/.*{/{/" | jq ".[\"Available Space\"]")
 '
@@ -759,9 +767,9 @@ RRDgDEF[8]=$(cat <<EOF
 'DEF:free0=\$RRD:free0:AVERAGE'
 'DEF:free1=\$RRD:free1:AVERAGE'
 'DEF:free2=\$RRD:free2:AVERAGE'
-'CDEF:nfree0=free0,-1,*'
-'CDEF:nfree1=free1,-1,*'
-'CDEF:nfree2=free2,-1,*'
+'CDEF:nfree0=free0,-1,*,-1,MAX'
+'CDEF:nfree1=free1,-1,*,-1,MAX'
+'CDEF:nfree2=free2,-1,*,-1,MAX'
 'CDEF:lnfree0=free0,nfree0,UNKN,IF'
 'CDEF:lnfree1=free1,nfree1,nfree0,+,UNKN,IF'
 'CDEF:lnfree2=free2,nfree2,nfree1,nfree0,+,+,UNKN,IF'
@@ -769,7 +777,7 @@ RRDgDEF[8]=$(cat <<EOF
 'AREA:nfree1#CC7016::STACK'
 'AREA:nfree2#1598C3::STACK'
 'VDEF:tot0=nfree0,TOTAL'
-'LINE1:lnfree0#54EC48:node0'
+'LINE1:lnfree0#54EC48:node3'
   GPRINT:nfree0:AVERAGE:"avg %1.2lf %s"
   GPRINT:tot0:"total %1.2lf %s"
   GPRINT:nfree0:LAST:"last %1.2lf %s/s\n"
@@ -793,6 +801,123 @@ RRDgGRAPH[50]="86400|${FILENAME}24|${GRAPHNAME}, last day|[ \"\$H\" = 04 ] && [ 
 RRDgGRAPH[51]="604800|${FILENAME}W|${GRAPHNAME}, last week|[ \"\$H\" = 04 ] && [ \"\$M\" = 30 ]|--right-axis 1:0 --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:\"%a %d/%m\""
 RRDgGRAPH[52]="2678400|${FILENAME}M|${GRAPHNAME}, last month|[ \"\$H\" = 04 ] && [ \"\$M\" = 30 ]|--right-axis 1:0 --alt-y-grid"
 RRDgGRAPH[53]="31536000|${FILENAME}Y|${GRAPHNAME}, last year|[ \"\$H\" = 04 ] && [ \"\$M\" = 30 ]|--right-axis 1:0 --alt-y-grid"
+
+#-------------------------------------------------------------------
+# data definition: disk (2nd pair) IO usage
+#-------------------------------------------------------------------
+
+RRDcFILE[9]="diskz:60:Disks 3+4 IO usage graphs"
+RRDcDEF[9]='
+DS:ar:DERIVE:120:0:U
+DS:aw:DERIVE:120:0:U
+DS:arm:DERIVE:120:0:U
+DS:awm:DERIVE:120:0:U
+DS:ars:DERIVE:120:0:U
+DS:aws:DERIVE:120:0:U
+DS:br:DERIVE:120:0:U
+DS:bw:DERIVE:120:0:U
+DS:brm:DERIVE:120:0:U
+DS:bwm:DERIVE:120:0:U
+DS:brs:DERIVE:120:0:U
+DS:bws:DERIVE:120:0:U
+DS:cr:DERIVE:120:0:U
+DS:cw:DERIVE:120:0:U
+DS:crm:DERIVE:120:0:U
+DS:cwm:DERIVE:120:0:U
+DS:crs:DERIVE:120:0:U
+DS:cws:DERIVE:120:0:U
+DS:dr:DERIVE:120:0:U
+DS:dw:DERIVE:120:0:U
+DS:drm:DERIVE:120:0:U
+DS:dwm:DERIVE:120:0:U
+DS:drs:DERIVE:120:0:U
+DS:dws:DERIVE:120:0:U
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:1d:10y
+'
+RRDuSRC[9]="ar:arm:ars:aw:awm:aws:cr:crm:crs:cw:cwm:cws"
+#echo U:U:U:U:U:U
+RRDuVAL[9]='
+echo -n $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca2a1f3cc93 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}"):
+echo    $(cat /sys/block/`readlink /dev/disk/by-id/wwn-0x5000cca295e13211 | sed "s,.*/,,"`/stat | awk "{print \$1\":\"\$2\":\"\$3\":\"\$5\":\"\$6\":\"\$7}")
+'
+RRDgUM[9]='hdd3 <-- requests/s --> hdd4'
+RRDgLIST[9]="54 56 57 58 59"
+RRDgDEF[9]=$(cat <<EOF
+'DEF:ar=\$RRD:ar:AVERAGE'
+'DEF:aw=\$RRD:aw:AVERAGE'
+'DEF:ars=\$RRD:ars:AVERAGE'
+'DEF:aws=\$RRD:aws:AVERAGE'
+'DEF:br=\$RRD:cr:AVERAGE'
+'DEF:bw=\$RRD:cw:AVERAGE'
+'DEF:brs=\$RRD:crs:AVERAGE'
+'DEF:bws=\$RRD:cws:AVERAGE'
+'DEF:sr=\$RRD:br:AVERAGE'
+'DEF:sw=\$RRD:bw:AVERAGE'
+'DEF:srs=\$RRD:brs:AVERAGE'
+'DEF:sws=\$RRD:bws:AVERAGE'
+'CDEF:nbr=br,-1,*'
+'CDEF:nbw=bw,-1,*'
+'CDEF:snbrs=brs,-1,*,2048,/,16,*'
+'CDEF:snbws=bws,-1,*,2048,/,16,*'
+'CDEF:sars=ars,2048,/,16,*'
+'CDEF:saws=aws,2048,/,16,*'
+'CDEF:arkb=ars,2,/'
+'CDEF:awkb=aws,2,/'
+'CDEF:brkb=brs,2,/'
+'CDEF:bwkb=bws,2,/'
+'CDEF:srkb=srs,2,/'
+'CDEF:swkb=sws,2,/'
+'LINE1:ar#54EC48:HDD1 ⌀ r/s'
+GPRINT:ar:AVERAGE:"%.2lf"
+'LINE1:aw#EA644A:w/s'
+GPRINT:aw:AVERAGE:"%.2lf"
+'LINE2:sars#24BC14:rK/s'
+GPRINT:arkb:AVERAGE:"%.2lf"
+'CDEF:argb=arkb,1024,/,1024,/'
+'VDEF:totargb=argb,TOTAL'
+GPRINT:totargb:"Σ%.2lf GiB"
+'LINE2:saws#CC3118:wK/s'
+GPRINT:awkb:AVERAGE:"%.2lf"
+'CDEF:awgb=awkb,1024,/,1024,/'
+'VDEF:totawgb=awgb,TOTAL'
+GPRINT:totawgb:"Σ%.2lf GiB\n"
+'LINE1:nbr#54EC48:HDD2 ⌀ r/s'
+GPRINT:br:AVERAGE:"%.2lf"
+'LINE1:nbw#EA644A:w/s'
+GPRINT:bw:AVERAGE:"%.2lf"
+'LINE2:snbrs#24BC14:rK/s'
+GPRINT:brkb:AVERAGE:"%.2lf"
+'CDEF:brgb=brkb,1024,/,1024,/'
+'VDEF:totbrgb=brgb,TOTAL'
+GPRINT:totbrgb:"Σ%.2lf GiB"
+'LINE2:snbws#CC3118:wK/s'
+GPRINT:bwkb:AVERAGE:"%.2lf"
+'CDEF:bwgb=bwkb,1024,/,1024,/'
+'VDEF:totbwbb=bwgb,TOTAL'
+GPRINT:totbwbb:"Σ%.2lf GiB\n"
+GPRINT:sr:AVERAGE:"SSD ⌀ r/s %.2lf"
+GPRINT:sw:AVERAGE:"w/s %.2lf"
+GPRINT:srkb:AVERAGE:"| rK/s %.2lf"
+'CDEF:srgb=srkb,1024,/,1024,/'
+'VDEF:totsrgb=srgb,TOTAL'
+GPRINT:totsrgb:"Σ%.2lf GiB"
+GPRINT:swkb:AVERAGE:"| wK/s %.2lf"
+'CDEF:swgb=swkb,1024,/,1024,/'
+'VDEF:totswbb=swgb,TOTAL'
+GPRINT:totswbb:"Σ%.2lf GiB\n"
+'HRULE:0#FFFFFF'
+EOF
+)
+
+RRDgGRAPH[54]='14400|diskz4|Disks 3+4 IO usage, last 4 hours|[ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s" --alt-y-grid'
+#
+RRDgGRAPH[56]='86400|diskz24|Disks 3+4 IO usage, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[57]='604800|diskzW|Disks 3+4 IO usage, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[58]='2678400|diskzM|Disks 3+4 IO usage, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[59]='31536000|diskzY|Disks 3+4 IO usage, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
 
 
 ####################################################################
@@ -864,6 +989,7 @@ for N in "$@"; do
 			HTMLFILE="${RRDOUTPUT}/${FILEBASE}.html"
 			STEP=$(echo "${RRDcFILE[$N]}"|awk -F: '{print $2}')
 			HTITLE=$(echo "${RRDcFILE[$N]}"|awk -F: '{print $3}')
+			echo "Vars: HTMLFILE " $HTMLFILE ", STEP " $STEP " , HTITLE " $HTITLE
 			# check RRD archive
 			[ -d "$RRDDATA" ] || mkdir -p "$RRDDATA"
 			[ -f "$RRDFILE" ] || CreateRRD  "$RRDFILE" "$STEP" "${RRDcDEF[$N]}"
@@ -875,11 +1001,12 @@ for N in "$@"; do
 				for P in ${RRDgLIST[$N]}; do
 					[ -z "${RRDgGRAPH[$P]}" ] && continue
 					IMGBASE=$(echo "${RRDgGRAPH[$P]}"|cut -d'|' -f2)
+ 					echo $P " in ($N): <img src=\"${IMGBASE}.svg\"><br>"
 					echo "<img src=\"${IMGBASE}.svg\"><br>" >> "$HTMLFILE"
 				done
 				echo "</center><p>RRDStorm for ${VERSION} / ${DATE}</p></body>" >> "$HTMLFILE"
 				# Creating timed dash files
-				for F in "4h:4 Hours dashboard:12 19 24 30 48 36 42" "1d:1 Day dashboard:13 20 26 32 50 38 44"; do
+				for F in "4h:4 Hours dashboard:12 19 54 24 30 48 36 42" "1d:1 Day dashboard:13 20 56 26 32 50 38 44"; do
 				    TIMEDFILENAME=$(echo "$F"|cut -d':' -f1)
 				    TIMEDFILETITLE=$(echo "$F"|cut -d':' -f2)
 				    TIMEDFILESOURCES=$(echo "$F"|cut -d':' -f3)
