@@ -713,9 +713,9 @@ RRA:MIN:0.5:1d:10y
 RRDuSRC[7]="tcpu:thdd:tssd"
 RRDuVAL[7]='
 TCPU=$(cat /sys/class/thermal/thermal_zone0/temp | awk "{printf \"%.1f\", \$1/1000}")
-THDD=$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5000cca28de6971f | grep "Celsius" | awk "{print \$10;}")
-TSSD=$(smartctl -d sat -a /dev/disk/by-id/wwn-0x5000cca264d3b9b0 | grep "Celsius" | awk "{print \$10;}")
-echo "${TCPU}:${THDD}:${TSSD}"
+THDD1=$(smartctl --nocheck=standby -d sat -A /dev/disk/by-id/wwn-0x5000cca28de6971f | grep "Celsius" | awk "{print \$10;}")
+THDD2=$(smartctl --nocheck=standby -d sat -A /dev/disk/by-id/wwn-0x5000cca264d3b9b0 | grep "Celsius" | awk "{print \$10;}")
+echo "${TCPU}:${THDD1:-U}:${THDD2:-U}"
 '
 RRDgUM[7]='Temperature'
 RRDgLIST[7]="42 44 45 46 47"
