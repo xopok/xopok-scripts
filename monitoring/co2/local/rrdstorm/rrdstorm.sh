@@ -253,7 +253,7 @@ else
 fi
 }
 HUMTEMPINT=$(Calc /dev/shm/sdr-Nexus-TH-95-1)
-HUMTEMPOUT=$(Calc /dev/shm/sdr-Nexus-TH-245-2)
+HUMTEMPOUT=$(Calc /dev/shm/sdr-Nexus-TH-83-2)
 HUMTEMPOUT2=$(Calc /dev/shm/sdr-Nexus-TH-48-2)
 HUMTEMPKID=$(Calc /dev/shm/sdr-Nexus-TH-101-3)
 HUMTEMP=`echo ${HUMTEMPINT} ${HUMTEMPOUT} ${HUMTEMPOUT2} ${HUMTEMPKID}`
@@ -567,9 +567,9 @@ RRA:AVERAGE:0.5:1d:10y
 RRDuSRC[5]="rootfree:rootused:placefree:placeused:placestorj"
 RRDuVAL[5]='
 echo -n $(df -B1 / | tail -n 1 | awk "{print \$4\":\"\$3}"):
-echo -n $(df -B1 /place[1-9] | tail -n +2 | awk "{ s = s + \$4; } END { printf \"%17.0f\", s; }"):
-TOTAL=$(df -B1 /place[1-9] | tail -n +2 | awk "{ s = s + \$3; } END { printf \"%17.0f\", s; }")
-OTHER=$(du -sx -B1 --exclude "/place[1-9]/storj*" /place[1-9] | awk "{ s = s + \$1; } END { printf \"%17.0f\", s; }")
+echo -n $(df -B1 /place4 | tail -n +2 | awk "{ s = s + \$4; } END { printf \"%17.0f\", s; }"):
+TOTAL=$(df -B1 /place4 | tail -n +2 | awk "{ s = s + \$3; } END { printf \"%17.0f\", s; }")
+OTHER=$(du -sx -B1 --exclude "/place4/storj*" /place[1-9] | awk "{ s = s + \$1; } END { printf \"%17.0f\", s; }")
 echo ${TOTAL}:$(expr $TOTAL - $OTHER)
 '
 #RRDgUM[5]='/root (x100) <- 0 -> /place'
