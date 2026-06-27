@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-RRDSTORM_DIR="$(cd "${BATS_TEST_DIRNAME}/../monitoring/co2/local/rrdstorm" && pwd)"
+RRDSTORM_DIR="$(cd "${BATS_TEST_DIRNAME}/../co2/local/rrdstorm" && pwd)"
 
 @test "wrapper.sh fails on invalid command" {
     run "${RRDSTORM_DIR}/wrapper.sh" fake_command 0

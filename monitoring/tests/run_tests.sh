@@ -5,7 +5,7 @@
 set -euo pipefail
 
 TESTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "${TESTS_DIR}/.." && pwd)"
+PROJECT_DIR="$(cd "${TESTS_DIR}/../.." && pwd)"
 RRDSTORM_DIR="${PROJECT_DIR}/monitoring/co2/local/rrdstorm"
 
 export RRDTOOL="${TESTS_DIR}/mock_rrdtool.sh"
