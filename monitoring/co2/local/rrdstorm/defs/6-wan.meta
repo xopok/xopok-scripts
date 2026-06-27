@@ -1,0 +1,20 @@
+#!/bin/bash
+RRDcFILE[6]="wan:60:WAN traffic graphs"
+RRDcDEF[6]='
+DS:in:COUNTER:600:0:1000000000
+DS:out:COUNTER:600:0:1000000000
+DS:dockin:COUNTER:600:0:1000000000
+DS:dockout:COUNTER:600:0:1000000000
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:1d:10y
+'
+RRDuSRC[6]="in:out:dockin:dockout"
+RRDgUM[6]='Down <-- bytes/s --> Up'
+RRDgLIST[6]="36 38 39 40 41"
+RRDgGRAPH[36]='14400|wan4|WAN traffic, last 4 hours|[ "$M" = 30 ]|-r --right-axis 1:0 --alt-y-grid'
+RRDgGRAPH[38]='86400|wan24|WAN traffic, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[39]='604800|wanW|WAN traffic, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[40]='2678400|wanM|WAN traffic, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid --right-axis 1:0 '
+RRDgGRAPH[41]='31536000|wanY|WAN traffic, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --alt-y-grid --right-axis 1:0 '

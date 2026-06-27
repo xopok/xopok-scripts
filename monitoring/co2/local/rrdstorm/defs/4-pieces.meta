@@ -1,0 +1,26 @@
+#!/bin/bash
+RRDcFILE[4]="pieces:60:Storj Traffic graphs"
+RRDcDEF[4]='
+DS:upload:ABSOLUTE:600:0:U
+DS:uploaded:ABSOLUTE:600:0:U
+DS:uploadfailed:ABSOLUTE:600:0:U
+DS:download:ABSOLUTE:600:0:U
+DS:downloaded:ABSOLUTE:600:0:U
+DS:downloadfailed:ABSOLUTE:600:0:U
+DS:audit:ABSOLUTE:600:0:U
+DS:audited:ABSOLUTE:600:0:U
+DS:auditfailed:ABSOLUTE:600:0:U
+DS:deleted:ABSOLUTE:600:0:U
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:1d:10y
+'
+RRDuSRC[4]="upload:uploaded:uploadfailed:download:downloaded:downloadfailed:audit:audited:auditfailed:deleted"
+RRDgUM[4]='Downloads <-- pieces/min --> Uploads'
+RRDgLIST[4]="24 26 27 28 29"
+RRDgGRAPH[24]='14400|piece4|Storj Traffic, last 4 hours|[ "$M" = 30 ]|-r --right-axis 1:0 --alt-y-grid'
+RRDgGRAPH[26]='86400|piece24|Storj Traffic, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[27]='604800|pieceW|Storj Traffic, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[28]='2678400|pieceM|Storj Traffic, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 '
+RRDgGRAPH[29]='31536000|pieceY|Storj Traffic, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 '

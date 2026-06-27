@@ -1,0 +1,40 @@
+#!/bin/bash
+RRDcFILE[9]="diskz:60:Disks 3+4 IO usage graphs"
+RRDcDEF[9]='
+DS:ar:DERIVE:120:0:U
+DS:aw:DERIVE:120:0:U
+DS:arm:DERIVE:120:0:U
+DS:awm:DERIVE:120:0:U
+DS:ars:DERIVE:120:0:U
+DS:aws:DERIVE:120:0:U
+DS:br:DERIVE:120:0:U
+DS:bw:DERIVE:120:0:U
+DS:brm:DERIVE:120:0:U
+DS:bwm:DERIVE:120:0:U
+DS:brs:DERIVE:120:0:U
+DS:bws:DERIVE:120:0:U
+DS:cr:DERIVE:120:0:U
+DS:cw:DERIVE:120:0:U
+DS:crm:DERIVE:120:0:U
+DS:cwm:DERIVE:120:0:U
+DS:crs:DERIVE:120:0:U
+DS:cws:DERIVE:120:0:U
+DS:dr:DERIVE:120:0:U
+DS:dw:DERIVE:120:0:U
+DS:drm:DERIVE:120:0:U
+DS:dwm:DERIVE:120:0:U
+DS:drs:DERIVE:120:0:U
+DS:dws:DERIVE:120:0:U
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:1d:10y
+'
+RRDuSRC[9]="ar:arm:ars:aw:awm:aws:cr:crm:crs:cw:cwm:cws"
+RRDgUM[9]='hdd3 <-- requests/s --> hdd4'
+RRDgLIST[9]="54 56 57 58 59"
+RRDgGRAPH[54]='14400|diskz4|Disks 3+4 IO usage, last 4 hours|[ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s" --alt-y-grid'
+RRDgGRAPH[56]='86400|diskz24|Disks 3+4 IO usage, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[57]='604800|diskzW|Disks 3+4 IO usage, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[58]='2678400|diskzM|Disks 3+4 IO usage, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'
+RRDgGRAPH[59]='31536000|diskzY|Disks 3+4 IO usage, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|-r --right-axis 65536:0 --right-axis-label "B/s"'

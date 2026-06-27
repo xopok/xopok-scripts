@@ -1,0 +1,21 @@
+#!/bin/bash
+RRDcFILE[5]="hdd:60:Disk space graphs"
+RRDcDEF[5]='
+DS:rootfree:GAUGE:600:0:U
+DS:rootused:GAUGE:600:0:U
+DS:placefree:GAUGE:600:0:U
+DS:placeused:GAUGE:600:0:U
+DS:placestorj:GAUGE:600:0:U
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:1d:10y
+'
+RRDuSRC[5]="rootfree:rootused:placefree:placeused:placestorj"
+RRDgUM[5]='/place/storj?'
+RRDgLIST[5]="30 32 33 34 35"
+RRDgGRAPH[30]='14400|hdd4|Disk space, 4 last hours|[ "$M" = 30 ]|-r --right-axis 1:0 --alt-y-grid'
+RRDgGRAPH[32]='86400|hdd24|Disk space, last day|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H '
+RRDgGRAPH[33]='604800|hddW|Disk space, last week|[ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0 --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" '
+RRDgGRAPH[34]='2678400|hddM|Disk space, last month|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0  --alt-y-grid '
+RRDgGRAPH[35]='31536000|hddY|Disk space, last year|[ "$H" = 04 ] && [ "$M" -ge 30 ] && [ "$M" -le 45 ]|-r --right-axis 1:0  --alt-y-grid '

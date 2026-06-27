@@ -1,0 +1,22 @@
+#!/bin/bash
+RRDcFILE[7]="syshealth:60:System health graphs"
+RRDcDEF[7]='
+DS:tcpu:GAUGE:120:-273:100
+DS:thdd:GAUGE:120:-273:100
+DS:tssd:GAUGE:120:-273:100
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:4h:1y
+RRA:AVERAGE:0.5:1d:10y
+RRA:MAX:0.5:1d:10y
+RRA:MIN:0.5:1d:10y
+'
+RRDuSRC[7]="tcpu:thdd:tssd"
+RRDgUM[7]='Temperature'
+RRDgLIST[7]="42 44 45 46 47"
+RRDgGRAPH[42]='14400|syshealth4|System temp, last 4 hours|[ "$M" = 30 ]| --right-axis 1:0'
+RRDgGRAPH[44]='86400|syshealth24|System temp, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[45]='604800|syshealthW|System temp, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[46]='2678400|syshealthM|System temp, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0'
+RRDgGRAPH[47]='31536000|syshealthY|System temp, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0'

@@ -1,0 +1,19 @@
+#!/bin/bash
+RRDcFILE[8]="nodespace:60:Free disk space per storj node"
+RRDcDEF[8]='
+DS:free0:DERIVE:300:-100000000000000:100000000000000
+DS:free1:DERIVE:300:-100000000000000:100000000000000
+DS:free2:DERIVE:300:-100000000000000:100000000000000
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:1d:10y
+'
+RRDuSRC[8]="free0:free1:free2"
+RRDgUM[8]='Disk space'
+RRDgLIST[8]="48 50 51 52 53"
+RRDgGRAPH[48]='14400|nodespace4|Free disk space per storj node, last 4 hours|[ "$M" = 30 ]| --right-axis 1:0 --alt-y-grid'
+RRDgGRAPH[50]='86400|nodespace24|Free disk space per storj node, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --alt-y-grid --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[51]='604800|nodespaceW|Free disk space per storj node, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --alt-y-grid --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[52]='2678400|nodespaceM|Free disk space per storj node, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --alt-y-grid'
+RRDgGRAPH[53]='31536000|nodespaceY|Free disk space per storj node, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 1:0 --alt-y-grid'

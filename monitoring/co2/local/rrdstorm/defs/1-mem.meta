@@ -1,0 +1,23 @@
+#!/bin/bash
+RRDcFILE[1]="mem:60:RAM usage graphs"
+RRDcDEF[1]='
+DS:cached:GAUGE:120:0:1000000
+DS:buffer:GAUGE:120:0:1000000
+DS:free:GAUGE:120:0:1000000
+DS:total:GAUGE:120:0:1000000
+DS:swapt:GAUGE:120:0:1000000
+DS:swapf:GAUGE:120:0:1000000
+RRA:AVERAGE:0.5:1:576
+RRA:AVERAGE:0.5:6:672
+RRA:AVERAGE:0.5:24:732
+RRA:AVERAGE:0.5:144:1460
+'
+RRDuSRC[1]="cached:buffer:free:total:swapt:swapf"
+RRDgUM[1]='bytes'
+RRDgLIST[1]="6 7 8 9 10 11"
+RRDgGRAPH[6]='3600|mem1|RAM usage, last hour|[ "$M" = 30 ]|-l 0 -r'
+RRDgGRAPH[7]='14400|mem6|RAM usage, last 4 hours|[ "$M" = 30 ]|-l 0 -r'
+RRDgGRAPH[8]='86400|mem24|RAM usage, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|-l 0 -r --x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[9]='604800|memW|RAM usage, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|-l 0 -r --x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[10]='2678400|memM|RAM usage, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|-l 0 -r'
+RRDgGRAPH[11]='31536000|memY|RAM usage, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|-l 0 -r'

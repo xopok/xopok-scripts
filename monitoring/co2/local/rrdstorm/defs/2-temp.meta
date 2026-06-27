@@ -1,0 +1,31 @@
+#!/bin/bash
+RRDcFILE[2]="temp:60:CO2, temperature and humidity"
+RRDcDEF[2]='
+DS:co2:GAUGE:120:0:10000
+DS:co2kid:GAUGE:120:0:10000
+DS:tempint:GAUGE:120:-273:100
+DS:tempkid:GAUGE:120:-273:100
+DS:tempout:GAUGE:120:-273:100
+DS:tempout2:GAUGE:120:-273:100
+DS:humint:GAUGE:120:0:100
+DS:humkid:GAUGE:120:0:100
+DS:humout:GAUGE:120:0:100
+DS:humout2:GAUGE:120:0:100
+DS:humconv:GAUGE:120:0:100
+RRA:AVERAGE:0.5:1m:1d
+RRA:AVERAGE:0.5:10m:1w
+RRA:AVERAGE:0.5:1h:1M
+RRA:AVERAGE:0.5:4h:1y
+RRA:AVERAGE:0.5:1d:10y
+RRA:MAX:0.5:1d:10y
+RRA:MIN:0.5:1d:10y
+'
+RRDuSRC[2]="co2:co2kid:humint:tempint:humout:tempout:humout2:tempout2:humkid:tempkid:humconv"
+RRDgUM[2]='ppm'
+RRDgLIST[2]="12 13 14 15 16 17"
+RRDgGRAPH[12]='14400|temp4|Air, last 4 hours|[ "$M" = 30 ]|--right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
+RRDgGRAPH[13]='86400|temp24|Air, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|--x-grid HOUR:1:DAY:1:HOUR:1:0:%H --right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
+RRDgGRAPH[14]='604800|tempW|Air, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|--x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m" --right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
+RRDgGRAPH[15]='2678400|tempM|Air, last month|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
+RRDgGRAPH[16]='31536000|tempY|Air, last year|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'
+RRDgGRAPH[17]='126144000|temp4Y|Air, last 4 years|[ "$H" = 04 ] && [ "$M" = 30 ]|--right-axis 0.05:0 --right-axis-label "Temp/Humidity" --right-axis-format "%1.0lf" --units-exponent 0 --slope-mode'

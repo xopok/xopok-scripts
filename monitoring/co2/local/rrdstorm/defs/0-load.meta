@@ -1,0 +1,20 @@
+#!/bin/bash
+RRDcFILE[0]="load:60:System load graphs"
+RRDcDEF[0]='
+DS:l1:GAUGE:120:0:100
+DS:l5:GAUGE:120:0:100
+DS:l15:GAUGE:120:0:100
+RRA:AVERAGE:0.5:1:576
+RRA:AVERAGE:0.5:6:672
+RRA:AVERAGE:0.5:24:732
+RRA:AVERAGE:0.5:144:1460
+'
+RRDuSRC[0]="l1:l5:l15"
+RRDgUM[0]='proc/min'
+RRDgLIST[0]="0 1 2 3 4 5"
+RRDgGRAPH[0]='3600|load1|System load, last hour|[ "$M" = 30 ]'
+RRDgGRAPH[1]='14400|load6|System load, last 4 hours|[ "$M" = 30 ]'
+RRDgGRAPH[2]='86400|load24|System load, last day|[ "$H" = 04 ] && [ "$M" = 30 ]|--x-grid HOUR:1:DAY:1:HOUR:1:0:%H'
+RRDgGRAPH[3]='604800|loadW|System load, last week|[ "$H" = 04 ] && [ "$M" = 30 ]|--x-grid HOUR:4:DAY:1:DAY:1:0:"%a %d/%m"'
+RRDgGRAPH[4]='2678400|loadM|System load, last month|[ "$H" = 04 ] && [ "$M" = 30 ]'
+RRDgGRAPH[5]='31536000|loadY|System load, last year|[ "$H" = 04 ] && [ "$M" = 30 ]'
