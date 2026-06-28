@@ -38,5 +38,5 @@ teardown() {
 
     [[ "$output" == *"DEF:ds1=/var/lib/rrd/storj/load.rrd:l1:AVERAGE"* ]]
 
-    [[ "$output" == *"System load, last hour @"* ]]
+    [[ "$output" == *"-t System load, last hour"* ]]
 }

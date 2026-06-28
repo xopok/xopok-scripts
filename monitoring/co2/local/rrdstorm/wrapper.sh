@@ -44,6 +44,10 @@ CreateRRD()
 
 # $1 = N (source index)
 # $2 = P (graph index)
+# $3 = RRDFILE
+# $4 = M (minute)
+# $5 = H (hour)
+# $6 = MODE ("visual" or "cron")
 CreateGraph()
 {
     local N="$1"
@@ -51,6 +55,7 @@ CreateGraph()
     local RRDFILE="$3"
     local M="$4"
     local H="$5"
+    local MODE="${6:-visual}"
 
     [ -z "${RRDgGRAPH[$P]}" ] && return
 
@@ -58,9 +63,11 @@ CreateGraph()
 
     BACK=$(echo "${RRDgGRAPH[$P]}" | cut -d'|' -f1)
     IMGBASE=$(echo "${RRDgGRAPH[$P]}" | cut -d'|' -f2)
-    TITLE=$(echo "${RRDgGRAPH[$P]}" | cut -d'|' -f3)" @ \"${H}\":\"${M}\""
+    TITLE=$(echo "${RRDgGRAPH[$P]}" | cut -d'|' -f3)
+    if [ "$MODE" = "visual" ]; then
+        TITLE="${TITLE} @ \"${H}\":\"${M}\""
+    fi
     EXTRA=$(echo "${RRDgGRAPH[$P]}" | cut -d'|' -f5)
-    eval "EXTRA_ARGS=($EXTRA)"
     COND=$(echo "${RRDgGRAPH[$P]}" | cut -d'|' -f4)
 
     if [ ! -z "$FORCEGRAPH" ]; then
@@ -88,11 +95,22 @@ CreateGraph()
         GRAPH_ARGS+=("$line")
     done < "$DEF_FILE"
 
+    # Build extra args matching original order:
+    #   graph imgfile [extra --graph-render-mode normal] --color ... -M -a SVG ...
+    local ALL_EXTRA=()
+    if [ -n "$EXTRA" ]; then
+        eval "EXTRA_ARGS=($EXTRA)"
+        ALL_EXTRA+=("${EXTRA_ARGS[@]}")
+    fi
+    if [ "$MODE" = "visual" ]; then
+        ALL_EXTRA+=("--graph-render-mode" "normal")
+    fi
+    ALL_EXTRA+=("--color" "CANVAS#000000" "--color" "FONT#FFFFFF" "--color" "BACK#000000")
+
     "$RRDTOOL" graph "${RRDOUTPUT}/${IMGBASE}.svg" \
+        "${ALL_EXTRA[@]}" \
         -M -a SVG -s "-${BACK}" -e -20 -w 550 -h 240 \
-        -v "${RRDgUM[$N]}" -t "$TITLE" "${EXTRA_ARGS[@]}" \
-        --graph-render-mode normal \
-        --color CANVAS#000000 --color FONT#FFFFFF --color BACK#000000 \
+        -v "${RRDgUM[$N]}" -t "$TITLE" \
         "${GRAPH_ARGS[@]}"
 }
 
@@ -228,7 +246,7 @@ EOF
             M=$(date "+%M")
             H=$(date "+%H")
             for P in ${RRDgLIST[$N]}; do
-                CreateGraph "$N" "$P" "$RRDFILE" "$M" "$H"
+                CreateGraph "$N" "$P" "$RRDFILE" "$M" "$H" "visual"
             done
             ;;
 
@@ -245,7 +263,7 @@ EOF
                 *) exit 1 ;;
             esac
             P=$((((($N+1)*6)-6)+$CRON_SUB_GRAPH))
-            CreateGraph "$N" "$P" "$RRDFILE" "$M" "$H"
+            CreateGraph "$N" "$P" "$RRDFILE" "$M" "$H" "cron"
             ;;
 
         *)
