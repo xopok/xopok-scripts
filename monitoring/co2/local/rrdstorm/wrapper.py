@@ -406,93 +406,90 @@ class RRDStorm:
                         return m.group(1)
         return "raio"
 
-    def run(self):
-        args = self.args
-        command = args.command
-        cron_time = args.cron_graph_time
 
-        if command == "help":
-            print("Usage: wrapper.sh {create|update|graph|graph_cron[s h d w m y]} 0 1 2 ..")
-            print(
-                "graph_cron is for cron to quickly update just one graph "
-                "per time range [1h=s 4h=h 24h=d 1week=w 1 month=m 1year=y]}"
-            )
-            sys.exit(0)
 
-        if command == "":
-            print("Usage: wrapper.sh {create|update|graph|graph_cron[s h d w m y]} 0 1 2 ..")
-            sys.exit(1)
 
-        # Determine indices from positional args (skip command and cron_time)
-        indices = args.numbers
+def _make_handler(method_name):
+    """Create a handler that calls the given method for each number."""
+    method = getattr(RRDStorm, method_name)
+    def handler(app, numbers):
+        for N in numbers:
+            method(app, N)
+    return handler
 
-        if command == "create":
-            self.create_html_index()
-            for N in indices:
-                self.handle_create(N)
 
-        elif command == "update":
-            for N in indices:
-                self.handle_update(N)
+def _make_cron_handler():
+    """Create a cron handler that iterates over numbers."""
+    def handler(app, numbers):
+        for N in numbers:
+            RRDStorm.handle_graph_cron(app, app.args.cron_graph_time, N)
+    return handler
 
-        elif command == "graph":
-            for N in indices:
-                self.handle_graph(N)
 
-        elif command == "graph_cron":
-            for N in indices:
-                self.handle_graph_cron(cron_time, N)
+class _Parser(argparse.ArgumentParser):
+    """Custom parser that produces bash-compatible error messages."""
 
-        else:
-            print(f"ERROR: Unknown command '{command}'. Run 'wrapper.sh help' for usage.", file=sys.stderr)
-            sys.exit(1)
+    def error(self, message):
+        # Handle "invalid choice" errors for subcommands
+        if "invalid choice:" in message:
+            m = re.search(r"invalid choice: '([^']+)'", message)
+            if m:
+                bad_cmd = m.group(1)
+                print(
+                    f"ERROR: Unknown command '{bad_cmd}'. Run 'wrapper.sh help' for usage.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+        super().error(message)
 
 
 def main():
-    parser = argparse.ArgumentParser(add_help=False)
+    parser = _Parser(description="RRDStorm Wrapper")
+
+    # Global flags
     parser.add_argument("--rrdtool", default=None)
     parser.add_argument("--rrddata", default=None)
     parser.add_argument("--rrdoutput", default=None)
     parser.add_argument("--forcegraph", default=None)
 
-    # Parse known args first to get the flags
-    (flags, remaining) = parser.parse_known_args()
+    # Subparsers for commands
+    subparsers = parser.add_subparsers(dest="command")
 
-    # Now manually parse remaining positional args like bash does
-    # Bash: COMMAND="$1"; shift; if graph_cron then CRON_TIME="$2"; shift 2 else shift 1
-    cmd = remaining[0] if len(remaining) > 0 else "help"
+    # help: prints usage and exits (no positional args)
+    subparsers.add_parser("help")
 
-    if cmd == "graph_cron" and len(remaining) > 1:
-        cron_time = remaining[1]
-        numbers = [int(x) for x in remaining[2:]]
-    else:
-        cron_time = None
-        numbers = [int(x) for x in remaining[1:]] if len(remaining) > 1 else []
+    # create, update, graph: command + one or more numbers
+    for cmd, method in (("create", "handle_create"), ("update", "handle_update"), ("graph", "handle_graph")):
+        p = subparsers.add_parser(cmd)
+        p.add_argument("numbers", type=int, nargs="+")
+        # Wrap the unbound method to iterate over numbers
+        p.set_defaults(func=_make_handler(method))
 
-    # Validate cron_graph_time
-    if cmd == "graph_cron" and cron_time not in ("s", "h", "d", "w", "m", "y"):
-        print(f"ERROR: Invalid cron graph time '{cron_time}'", file=sys.stderr)
+    # graph_cron: command + cron_time + one or more numbers
+    p_cron = subparsers.add_parser("graph_cron")
+    p_cron.add_argument("cron_graph_time", choices=["s", "h", "d", "w", "m", "y"])
+    p_cron.add_argument("numbers", type=int, nargs="+")
+    p_cron.set_defaults(func=_make_cron_handler())
+
+    args = parser.parse_args()
+
+    if args.command is None:
+        print("Usage: wrapper.sh {create|update|graph|graph_cron[s h d w m y]} 0 1 2 ..")
         sys.exit(1)
 
-    # Build args object
-    class Args:
-        pass
-
-    args = Args()
-    args.command = cmd
-    args.cron_graph_time = cron_time
-    args.numbers = numbers
-    args.rrdtool = flags.rrdtool
-    args.rrddata = flags.rrddata
-    args.rrdoutput = flags.rrdoutput
-    args.forcegraph = flags.forcegraph
-
-    # Environment variable overrides take precedence over defaults but not --flags
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    app = RRDStorm(script_dir)
+    app = RRDStorm(os.path.dirname(os.path.abspath(__file__)))
     app.args = args
-    app.run()
+
+    # Dispatch to the appropriate handler
+    if args.command == "help":
+        print("Usage: wrapper.sh {create|update|graph|graph_cron[s h d w m y]} 0 1 2 ..")
+        print(
+            "graph_cron is for cron to quickly update just one graph "
+            "per time range [1h=s 4h=h 24h=d 1week=w 1 month=m 1year=y]}"
+        )
+        sys.exit(0)
+
+    args.func(app, args.numbers)
 
 
 if __name__ == "__main__":
