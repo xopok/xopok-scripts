@@ -39,10 +39,10 @@ DATE=$(date '+%x %R')
 # configuration
 #-------------------------------------------------------------------
 
-RRDTOOL=/usr/bin/rrdtool
+RRDTOOL="${RRDTOOL:-/usr/bin/rrdtool}"
 RRDUPDATE=/usr/bin/rrdupdate
 RRDDATA=/var/lib/rrd/storj
-RRDOUTPUT=/dev/shm/rrd.img
+RRDOUTPUT="${RRDOUTPUT:-/dev/shm/rrd.img}"
 FORCEGRAPH=no
 
 #-------------------------------------------------------------------
