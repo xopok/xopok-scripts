@@ -160,6 +160,6 @@ run_bash() {
     PY_OUTPUT=$(python3 "${RRDSTORM_DIR}/wrapper.py" update 999 2>&1)
     SH_OUTPUT=$(bash "${RRDSTORM_DIR}/wrapper.sh" update 999 2>&1)
 
-    [[ "$PY_OUTPUT" == *"Warning: No metadata file found for index 999"* ]]
-    [[ "$SH_OUTPUT" == *"Warning: No metadata file found for index 999"* ]]
+    [[ "$PY_OUTPUT" == *"No metadata file found for index 999"* ]]
+    [[ "$SH_OUTPUT" == *"No metadata file found for index 999"* ]]
 }

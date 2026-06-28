@@ -18,6 +18,7 @@ Usage:
 """
 
 import argparse
+import logging
 import os
 import re
 import shlex
@@ -25,6 +26,8 @@ import subprocess
 import sys
 from datetime import datetime as _datetime
 from pathlib import Path
+
+log = logging.getLogger("wrapper")
 
 # ── Meta file parser ──────────────────────────────────────────────────────────
 # Reads bash-style meta files that define RRDcFILE[N], RRDcDEF[N], etc.
@@ -214,7 +217,7 @@ class RRDStorm:
         def_file = self.defsdir / f"{N}-{filebase}.sh"
 
         if not def_file.is_file():
-            print(f"DEF file not found: {def_file}", file=sys.stderr)
+            log.error("DEF file not found: %s", def_file)
             return
 
         # Read DEF definitions
@@ -283,7 +286,7 @@ class RRDStorm:
         meta_files = list(self.defsdir.glob(f"{N}-*.meta"))
         meta_file = meta_files[0] if meta_files else None
         if not meta_file:
-            print(f"Warning: No metadata file found for index {N}", file=sys.stderr)
+            log.warning("No metadata file found for index %s", N)
             return
 
         filebase = self.RRDcFILE[n_str].split(":")[0]
@@ -351,7 +354,7 @@ class RRDStorm:
         meta_files = list(self.defsdir.glob(f"{N}-*.meta"))
         meta_file = meta_files[0] if meta_files else None
         if not meta_file:
-            print(f"Warning: No metadata file found for index {N}", file=sys.stderr)
+            log.warning("No metadata file found for index %s", N)
             return
         if n_str not in self.RRDcFILE:
             return
@@ -368,22 +371,19 @@ class RRDStorm:
                     timeout=30,
                 )
             except Exception as e:
-                print(f"ERROR: Extractor {extractor} failed: {e}", file=sys.stderr)
+                log.error("Extractor %s failed: %s", extractor, e)
                 return
 
             if result.returncode != 0:
-                print(
-                    f"ERROR: Extractor {extractor} failed with exit code {result.returncode}",
-                    file=sys.stderr,
-                )
+                log.error("Extractor %s failed with exit code %d", extractor, result.returncode)
                 return
 
             val = result.stdout.strip()
             if not val:
-                print(f"Warning: Extractor {extractor} returned empty data. Skipping update.", file=sys.stderr)
+                log.warning("Extractor %s returned empty data. Skipping update.", extractor)
                 return
 
-            print(f"Updating ({N}) {rrdf} with {val} ..", flush=True)
+            log.info("Updating (%s) %s with %s ..", N, rrdf, val)
 
             # Run update_rrd_db.sh
             update_script = Path(self.script_dir) / "update_rrd_db.sh"
@@ -392,7 +392,7 @@ class RRDStorm:
                 check=True,
             )
         else:
-            print(f"ERROR: Data extractor not found: {extractor}", file=sys.stderr)
+            log.error("Data extractor not found: %s", extractor)
 
     def _get_time(self):
         """Get current hour and minute using native datetime.
@@ -422,7 +422,7 @@ class RRDStorm:
 
         cron_map = {"s": 0, "h": 1, "d": 2, "w": 3, "m": 4, "y": 5}
         if cron_time not in cron_map:
-            print(f"ERROR: Invalid cron graph time '{cron_time}'", file=sys.stderr)
+            log.error("Invalid cron graph time '%s'", cron_time)
             sys.exit(1)
 
         cron_sub = cron_map[cron_time]
@@ -477,10 +477,7 @@ class _Parser(argparse.ArgumentParser):
             m = re.search(r"invalid choice: '([^']+)'", message)
             if m:
                 bad_cmd = m.group(1)
-                print(
-                    f"ERROR: Unknown command '{bad_cmd}'. Run 'wrapper.sh help' for usage.",
-                    file=sys.stderr,
-                )
+                log.error("Unknown command '%s'. Run 'wrapper.sh help' for usage.", bad_cmd)
                 sys.exit(1)
         super().error(message)
 
@@ -535,4 +532,8 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(levelname)s: %(message)s",
+        level=logging.INFO,
+    )
     main()
