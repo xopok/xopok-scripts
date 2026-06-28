@@ -18,13 +18,13 @@ Usage:
 """
 
 import argparse
-import glob
 import os
 import re
 import shlex
 import subprocess
 import sys
 from datetime import datetime as _datetime
+from pathlib import Path
 
 # ── Meta file parser ──────────────────────────────────────────────────────────
 # Reads bash-style meta files that define RRDcFILE[N], RRDcDEF[N], etc.
@@ -100,13 +100,13 @@ def evaluate_condition(cond, M, H):
 class RRDStorm:
     def __init__(self, script_dir):
         self.script_dir = script_dir
-        self.datadir = os.path.join(script_dir, "data")
-        self.defsdir = os.path.join(script_dir, "defs")
+        self.datadir = Path(script_dir) / "data"
+        self.defsdir = Path(script_dir) / "defs"
 
         self.rrdtool = os.environ.get("RRDTOOL", "/usr/bin/rrdtool")
         self.rrdupdate = os.environ.get("RRDUPDATE", "/usr/bin/rrdupdate")
-        self.rrddata = os.environ.get("RRDDATA", "/var/lib/rrd/storj")
-        self.rrdoutput = os.environ.get("RRDOUTPUT", "/dev/shm/rrd.img")
+        self.rrddata = Path(os.environ.get("RRDDATA", "/var/lib/rrd/storj"))
+        self.rrdoutput = Path(os.environ.get("RRDOUTPUT", "/dev/shm/rrd.img"))
         self.forcegraph = os.environ.get("FORCEGRAPH", "no")
 
         self.RRDcFILE = {}
@@ -120,7 +120,7 @@ class RRDStorm:
 
     def load_meta_files(self):
         """Discover and load all *.meta files from the defs directory."""
-        meta_files = sorted(glob.glob(os.path.join(self.defsdir, "*.meta")))
+        meta_files = sorted(self.defsdir.glob("*.meta"))
         for meta_file in meta_files:
             parsed = parse_meta_file(meta_file)
             for key in ["RRDcFILE", "RRDcDEF", "RRDuSRC", "RRDgUM", "RRDgLIST", "RRDgGRAPH"]:
@@ -161,16 +161,16 @@ class RRDStorm:
         if ret != 1:
             return
 
-        print(f"Making graph ({N}:{P}) {self.rrdoutput}/{imgbase}.svg ..", flush=True)
+        print(f"Making graph ({N}:{P}) {self.rrdoutput / f'{imgbase}.svg'} ..", flush=True)
 
         # Determine FILEBASE from RRDcFILE[N]
         n_str = str(N)
         if n_str not in self.RRDcFILE:
             return
         filebase = self.RRDcFILE[n_str].split(":")[0]
-        def_file = os.path.join(self.defsdir, f"{N}-{filebase}.sh")
+        def_file = self.defsdir / f"{N}-{filebase}.sh"
 
-        if not os.path.isfile(def_file):
+        if not def_file.is_file():
             print(f"DEF file not found: {def_file}", file=sys.stderr)
             return
 
@@ -181,7 +181,7 @@ class RRDStorm:
                 line = line.rstrip("\n")
                 if not line or line.startswith("#"):
                     continue
-                line = line.replace("$RRD", rrdf)
+                line = line.replace("$RRD", str(rrdf))
                 graph_args.append(line)
 
         # Build extra args
@@ -206,7 +206,7 @@ class RRDStorm:
             [
                 self.rrdtool,
                 "graph",
-                f"{self.rrdoutput}/{imgbase}.svg",
+                str(self.rrdoutput / f"{imgbase}.svg"),
             ]
             + all_extra
             + [
@@ -225,9 +225,9 @@ class RRDStorm:
         )
 
     def create_html_index(self):
-        os.makedirs(self.rrdoutput, exist_ok=True)
-        htmlindex = os.path.join(self.rrdoutput, "storj.html")
-        if not os.path.isfile(htmlindex):
+        self.rrdoutput.mkdir(parents=True, exist_ok=True)
+        htmlindex = self.rrdoutput / "storj.html"
+        if not htmlindex.is_file():
             with open(htmlindex, "w") as f:
                 f.write(
                     "<head><title>RRDStorm</title>\n"
@@ -237,14 +237,15 @@ class RRDStorm:
 
     def handle_create(self, N):
         n_str = str(N)
-        meta_file = sorted(glob.glob(os.path.join(self.defsdir, f"{N}-*.meta")))[0] if glob.glob(os.path.join(self.defsdir, f"{N}-*.meta")) else None
+        meta_files = list(self.defsdir.glob(f"{N}-*.meta"))
+        meta_file = meta_files[0] if meta_files else None
         if not meta_file:
             print(f"Warning: No metadata file found for index {N}", file=sys.stderr)
             return
 
         filebase = self.RRDcFILE[n_str].split(":")[0]
-        rrdf = os.path.join(self.rrddata, f"{filebase}.rrd")
-        htmlfile = os.path.join(self.rrdoutput, f"{filebase}.html")
+        rrdf = self.rrddata / f"{filebase}.rrd"
+        htmlfile = self.rrdoutput / f"{filebase}.html"
         step = self.RRDcFILE[n_str].split(":")[1]
         htitle = self.RRDcFILE[n_str].split(":")[2]
 
@@ -257,14 +258,11 @@ class RRDStorm:
 
         print(f"Vars: HTMLFILE {htmlfile}, STEP {step}, HTITLE {htitle}", flush=True)
 
-        try:
-            os.makedirs(self.rrddata, exist_ok=True)
-        except OSError:
-            pass
-        if not os.path.isfile(rrdf):
+        self.rrddata.mkdir(parents=True, exist_ok=True)
+        if not rrdf.is_file():
             self.create_rrd(rrdf, step, self.RRDcDEF[n_str])
 
-        if not os.path.isfile(htmlfile):
+        if not htmlfile.is_file():
             with open(htmlfile, "w") as f:
                 f.write(
                     f"<head><title>{htitle}</title>\n"
@@ -286,7 +284,7 @@ class RRDStorm:
                 timed_filename = parts[0]
                 timed_file_title = parts[1]
                 timed_file_sources = parts[2]
-                dash_file = os.path.join(self.rrdoutput, f"{timed_filename}.html")
+                dash_file = self.rrdoutput / f"{timed_filename}.html"
                 with open(dash_file, "w") as f:
                     f.write(
                         f"<head><title>{timed_file_title}</title>\n"
@@ -307,17 +305,18 @@ class RRDStorm:
 
     def handle_update(self, N):
         n_str = str(N)
-        meta_file = sorted(glob.glob(os.path.join(self.defsdir, f"{N}-*.meta")))[0] if glob.glob(os.path.join(self.defsdir, f"{N}-*.meta")) else None
+        meta_files = list(self.defsdir.glob(f"{N}-*.meta"))
+        meta_file = meta_files[0] if meta_files else None
         if not meta_file:
             print(f"Warning: No metadata file found for index {N}", file=sys.stderr)
             return
         if n_str not in self.RRDcFILE:
             return
         filebase = self.RRDcFILE[n_str].split(":")[0]
-        rrdf = os.path.join(self.rrddata, f"{filebase}.rrd")
+        rrdf = self.rrddata / f"{filebase}.rrd"
 
-        extractor = os.path.join(self.datadir, f"{N}-{filebase}.sh")
-        if os.path.isfile(extractor):
+        extractor = self.datadir / f"{N}-{filebase}.sh"
+        if extractor.is_file():
             try:
                 result = subprocess.run(
                     [extractor],
@@ -344,7 +343,7 @@ class RRDStorm:
             print(f"Updating ({N}) {rrdf} with {val} ..", flush=True)
 
             # Run update_rrd_db.sh
-            update_script = os.path.join(self.script_dir, "update_rrd_db.sh")
+            update_script = Path(self.script_dir) / "update_rrd_db.sh"
             subprocess.run(
                 ["bash", update_script, rrdf, self.RRDuSRC.get(n_str, ""), val],
                 check=True,
@@ -370,7 +369,7 @@ class RRDStorm:
         if n_str not in self.RRDcFILE:
             return
         filebase = self.RRDcFILE[n_str].split(":")[0]
-        rrdf = os.path.join(self.rrddata, f"{filebase}.rrd")
+        rrdf = self.rrddata / f"{filebase}.rrd"
         M, H = self._get_time()
         for p_str in self.RRDgLIST.get(n_str, "").split():
             self.create_graph(N, int(p_str), rrdf, M, H, "visual")
@@ -389,7 +388,7 @@ class RRDStorm:
         n_str = str(N)
         if n_str in self.RRDcFILE:
             filebase = self.RRDcFILE[n_str].split(":")[0]
-            rrdf = os.path.join(self.rrddata, f"{filebase}.rrd")
+            rrdf = self.rrddata / f"{filebase}.rrd"
         else:
             rrdf = None
 
@@ -397,8 +396,8 @@ class RRDStorm:
 
     def _version(self):
         """Get version string from config.sh."""
-        config_path = os.path.join(self.script_dir, "config.sh")
-        if os.path.isfile(config_path):
+        config_path = Path(self.script_dir) / "config.sh"
+        if config_path.is_file():
             with open(config_path) as f:
                 for line in f:
                     m = re.match(r'^VERSION="([^"]*)"', line)
@@ -477,7 +476,7 @@ def main():
         print("Usage: wrapper.sh {create|update|graph|graph_cron[s h d w m y]} 0 1 2 ..")
         sys.exit(1)
 
-    app = RRDStorm(os.path.dirname(os.path.abspath(__file__)))
+    app = RRDStorm(str(Path(__file__).parent))
     app.args = args
 
     # Dispatch to the appropriate handler
