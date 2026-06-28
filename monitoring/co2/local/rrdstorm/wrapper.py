@@ -59,39 +59,82 @@ def parse_meta_file(path):
 
 
 # ── Condition evaluator ───────────────────────────────────────────────────────
+#
+# Parses bash-style test expressions from .meta files:
+#   [ "$M" = 30 ]
+#   [ "$H" = 04 ] && [ "$M" = 30 ]
+#   [ "$M" -ge 30 ] && [ "$M" -le 45 ]
+#
+# Supported operators: =, !=, -ge, -le, -gt, -lt
+# Supported variables: $M (minute), $H (hour)
+# Supported combinators: && (AND)
+#
+# No eval() — conditions are parsed into a structured tree and
+# evaluated with explicit Python comparisons.
 
 
 def evaluate_condition(cond, M, H):
-    """Evaluate a bash-style condition like '[ "$M" = 30 ]' or
-    '[ "$H" = 04 ] && [ "$M" = 30 ]'.
+    """Evaluate a bash-style condition without eval().
 
     Returns True/False.
     """
     if not cond:
         return True
 
-    # Replace "$M" and "$H" with their actual values
-    expr = cond.replace('"$M"', f'"{M}"').replace('"$H"', f'"{H}"')
+    # Split by && combinator
+    clauses = [c.strip() for c in cond.split(" && ")]
+    return all(_eval_clause(c.strip(), M, H) for c in clauses)
 
-    # Remove the surrounding brackets
-    expr = re.sub(r'\[\s*([^]]*)\s*\]', r'\1', expr)
 
-    # Replace bash operators with Python equivalents
-    expr = expr.replace(' = ', ' == ')
-    expr = expr.replace(' != ', ' != ')
-    expr = expr.replace(' -ge ', ' >= ')
-    expr = expr.replace(' -le ', ' <= ')
-    expr = expr.replace(' -gt ', ' > ')
-    expr = expr.replace(' -lt ', ' < ')
-
-    # Replace bash logical operators with Python equivalents
-    expr = expr.replace(' && ', ' and ')
-    expr = expr.replace(r' \|\| ', ' or ')
-
-    try:
-        return bool(eval(expr))
-    except Exception:
+def _eval_clause(clause, M, H):
+    """Evaluate a single [ ... ] test clause."""
+    # Strip surrounding brackets
+    m = re.match(r'\[\s*(.*?)\s*\]\s*$', clause)
+    if not m:
         return False
+
+    inner = m.group(1)
+
+    # Match: $VAR operator value
+    # Supports: =, !=, -ge, -le, -gt, -lt
+    m = re.match(
+        r'"(\$[HM])"\s+(=|!=|-ge|-le|-gt|-lt)\s+(.+)',
+        inner,
+    )
+    if not m:
+        return False
+
+    var_name, op, val = m.group(1), m.group(2), m.group(3).strip()
+
+    var_val = None
+    if var_name == "$M":
+        var_val = int(M)
+    elif var_name == "$H":
+        var_val = int(H)
+    else:
+        return False
+
+    # Numeric values for comparison
+    try:
+        val = int(val)
+    except ValueError:
+        return False
+
+    # Safe, explicit comparisons — no eval
+    if op == "=":
+        return var_val == val
+    elif op == "!=":
+        return var_val != val
+    elif op == "-ge":
+        return var_val >= val
+    elif op == "-le":
+        return var_val <= val
+    elif op == "-gt":
+        return var_val > val
+    elif op == "-lt":
+        return var_val < val
+
+    return False
 
 
 # ── Main application ──────────────────────────────────────────────────────────
