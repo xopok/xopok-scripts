@@ -6,20 +6,12 @@ setup() {
     MOCK_DIR="$(mktemp -d)"
     RRDOUTPUT_DIR="$(mktemp -d)"
 
-    # Mock rrdtool: echoes all arguments to stdout
     cat > "${MOCK_DIR}/rrdtool" <<'EOF'
 #!/bin/bash
-echo "MOCK_RRDTOOL: $@"
-exit 0
+echo "$@"
 EOF
+    chmod +x "${MOCK_DIR}/rrdtool"
 
-    cat > "${MOCK_DIR}/rrdupdate" <<'EOF'
-#!/bin/bash
-echo "MOCK_RRDUPDATE: $@"
-exit 0
-EOF
-
-    # Mock date: deterministic time for render conditions
     cat > "${MOCK_DIR}/date" <<'EOF'
 #!/bin/bash
 if [ "$1" = "+%M" ]; then
@@ -30,14 +22,12 @@ else
     /bin/date "$@"
 fi
 EOF
-
-    chmod +x "${MOCK_DIR}/rrdtool" "${MOCK_DIR}/rrdupdate" "${MOCK_DIR}/date"
+    chmod +x "${MOCK_DIR}/date"
 
     export PATH="${MOCK_DIR}:${PATH}"
     export RRDTOOL="rrdtool"
-    export RRDUPDATE="rrdupdate"
-    export RRDOUTPUT="${RRDOUTPUT_DIR}"
     export FORCEGRAPH="yes"
+    export RRDOUTPUT="${RRDOUTPUT_DIR}"
 }
 
 teardown() {
@@ -45,31 +35,15 @@ teardown() {
 }
 
 @test "wrapper.sh output perfectly matches rrdstorm.sh output" {
-    # rrdstorm.sh hardcodes RRDTOOL, RRDUPDATE, RRDOUTPUT, FORCEGRAPH.
-    # Patch them to respect environment variables so our mocks take effect.
-    PATCHED_RRDSTORM="${MOCK_DIR}/rrdstorm.sh"
-    sed \
-        -e 's|^RRDTOOL=/usr/bin/rrdtool|RRDTOOL="${RRDTOOL:-/usr/bin/rrdtool}"|' \
-        -e 's|^RRDUPDATE=/usr/bin/rrdupdate|RRDUPDATE="${RRDUPDATE:-/usr/bin/rrdupdate}"|' \
-        -e 's|^RRDOUTPUT=/dev/shm/rrd.img|RRDOUTPUT="${RRDOUTPUT:-/dev/shm/rrd.img}"|' \
-        -e 's|^FORCEGRAPH=no|FORCEGRAPH="${FORCEGRAPH:-no}"|' \
-        "${RRDSTORM_DIR}/rrdstorm.sh" > "$PATCHED_RRDSTORM"
-    chmod +x "$PATCHED_RRDSTORM"
+    OLD_OUTPUT=$(cd "${RRDSTORM_DIR}" && bash rrdstorm.sh graph_cron s 0 2>/dev/null)
+    NEW_OUTPUT=$(cd "${RRDSTORM_DIR}" && bash wrapper.sh graph_cron s 0 2>/dev/null)
 
-    run "$PATCHED_RRDSTORM" graph_cron s 0
-    OLD_OUTPUT="$output"
-
-    run "${RRDSTORM_DIR}/wrapper.sh" graph_cron s 0
-    NEW_OUTPUT="$output"
-
-    if [ "$OLD_OUTPUT" != "$NEW_OUTPUT" ]; then
-        echo "--- OLD (rrdstorm.sh) ---"
+    [ "$OLD_OUTPUT" = "$NEW_OUTPUT" ] || {
+        echo "OUTPUTS DO NOT MATCH!"
+        echo "=== OLD (rrdstorm.sh) ==="
         echo "$OLD_OUTPUT"
-        echo "--- NEW (wrapper.sh) ---"
+        echo "=== NEW (wrapper.sh) ==="
         echo "$NEW_OUTPUT"
-        echo "--- DIFF ---"
-        diff <(echo "$OLD_OUTPUT") <(echo "$NEW_OUTPUT")
-    fi
-
-    [ "$OLD_OUTPUT" = "$NEW_OUTPUT" ]
+        false
+    }
 }
