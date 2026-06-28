@@ -24,6 +24,7 @@ import re
 import shlex
 import subprocess
 import sys
+from datetime import datetime as _datetime
 
 # ── Meta file parser ──────────────────────────────────────────────────────────
 # Reads bash-style meta files that define RRDcFILE[N], RRDcDEF[N], etc.
@@ -247,9 +248,12 @@ class RRDStorm:
         step = self.RRDcFILE[n_str].split(":")[1]
         htitle = self.RRDcFILE[n_str].split(":")[2]
 
-        # Get date using the `date` command to respect PATH mocks
-        date_result = subprocess.run(["date", "+%x %R"], capture_output=True, text=True)
-        date_str = date_result.stdout.strip()
+        override = os.environ.get("WRAP_TIME_OVERRIDE")
+        if override:
+            H, M = override.split(":")
+            date_str = f"{H}:{M}"
+        else:
+            date_str = _datetime.now().strftime("%x %R")
 
         print(f"Vars: HTMLFILE {htmlfile}, STEP {step}, HTITLE {htitle}", flush=True)
 
@@ -349,20 +353,17 @@ class RRDStorm:
             print(f"ERROR: Data extractor not found: {extractor}", file=sys.stderr)
 
     def _get_time(self):
-        """Get current hour and minute using the `date` command."""
-        result = subprocess.run(
-            ["date", "+%M"],
-            capture_output=True,
-            text=True,
-        )
-        M = result.stdout.strip()
-        result = subprocess.run(
-            ["date", "+%H"],
-            capture_output=True,
-            text=True,
-        )
-        H = result.stdout.strip()
-        return M, H
+        """Get current hour and minute using native datetime.
+
+        Respects WRAP_TIME_OVERRIDE for test parity with bash (which uses
+        the system `date` command). Format: "HH:MM" (e.g. "12:30").
+        """
+        override = os.environ.get("WRAP_TIME_OVERRIDE")
+        if override:
+            H, M = override.split(":")
+            return M, H
+        now = _datetime.now()
+        return now.strftime("%M"), now.strftime("%H")
 
     def handle_graph(self, N):
         n_str = str(N)

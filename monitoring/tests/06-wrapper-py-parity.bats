@@ -47,6 +47,7 @@ teardown() {
 
 run_python() {
     export RRDOUTPUT="${TEST_RRDOUTPUT}"
+    export WRAP_TIME_OVERRIDE="12:30"
     python3 "${RRDSTORM_DIR}/wrapper.py" "$@" 2>/dev/null
 }
 
