@@ -16,7 +16,7 @@ def build_graph(rrd_file):
     g.cdef("lnfree1", "free1,nfree1,nfree0,+,UNKN,IF")
     g.cdef("lnfree2", "free2,nfree2,nfree1,nfree0,+,+,UNKN,IF")
 
-    g.args.append("AREA:nfree0#24BC14")
+    g.area("nfree0", "24BC14")
     g.area("nfree1", "CC7016", "", stack=True)
     g.area("nfree2", "1598C3", "", stack=True)
 
@@ -38,6 +38,6 @@ def build_graph(rrd_file):
     g.gprint("tot2", "total %1.2lf %s")
     g.gprint("nfree2", "last %1.2lf %s/s\\n", "LAST")
 
-    g.args.append("HRULE:0#FFFFFF")
+    g.hrule(0, "FFFFFF")
 
     return g.compile()

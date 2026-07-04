@@ -15,15 +15,13 @@ def build_graph(rrd_file):
     pfg = g.cdef("pfg", pf / 1048576)
     pug = g.cdef("pug", pu / 1048576)
     psg = g.cdef("psg", ps / 1048576)
-
-    g.cdef("nrf", rf * -100)
-    g.cdef("nru", ru * -100)
-
+    nrf = g.cdef("nrf", rf * -100)
+    nru = g.cdef("nru", ru * -100)
     g.cdef("lnnru", "ru,nru,UNKN,IF")
     g.cdef("lnnrf", "ru,nrf,nru,+,UNKN,IF")
 
-    g.gprint("rug", "/ used %4.0lf M", "LAST")
-    g.gprint("rfg", "/ free %4.0lf M\\n", "LAST")
+    g.gprint("rug", "/ used %4.0lf", "LAST")
+    g.gprint("rfg", "/ free %4.0lf\\n", "LAST")
 
     g.cdef("lnps", "ps,ps,UNKN,IF")
     g.cdef("lnpu", "pu,pu,UNKN,IF")
@@ -34,7 +32,6 @@ def build_graph(rrd_file):
     g.gprint("psg", "%4.0lf M", "LAST")
     g.gprint("pug", "/place? used %4.0lf M", "LAST")
     g.gprint("pfg", "/place? free %4.0lf M", "LAST")
-
-    g.args.append("LINE1:ps#48C4EC")
+    g.line(1, ps, "48C4EC")
 
     return g.compile()
