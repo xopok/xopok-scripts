@@ -20,8 +20,8 @@ def build_graph(rrd_file):
     g.cdef("lnnru", "ru,nru,UNKN,IF")
     g.cdef("lnnrf", "ru,nrf,nru,+,UNKN,IF")
 
-    g.gprint("rug", "/ used %4.0lf", "LAST")
-    g.gprint("rfg", "/ free %4.0lf\\n", "LAST")
+    g.gprint("rug", "/ used %4.0lf M", "LAST")
+    g.gprint("rfg", "/ free %4.0lf M\\n", "LAST")
 
     g.cdef("lnps", "ps,ps,UNKN,IF")
     g.cdef("lnpu", "pu,pu,UNKN,IF")

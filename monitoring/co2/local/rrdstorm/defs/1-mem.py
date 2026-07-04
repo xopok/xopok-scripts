@@ -10,6 +10,7 @@ def build_graph(rrd_file):
     dsT = g.def_ds("dsT", "total")
 
     g.cdef("bo", "dsT,UN,0,dsT,IF,0,GT,UNKN,INF,IF")
+    g.area("bo", "DDDDDD", "")
 
     tot = g.cdef("tot", dsT * 1024)
     fre = g.cdef("fre", dsF * 1024)
@@ -22,7 +23,7 @@ def build_graph(rrd_file):
     useP = g.cdef("useP", use * 100 / tot)
     g.cdef("l", "use,1,1,IF")
 
-    g.area(use, "CC3300", "User")
+    g.area(use, "CC3300", "User   ")
     g.args.append("LINE2:l#AC1300::STACK")
 
     g.vdef("maxU", "use,MAXIMUM")

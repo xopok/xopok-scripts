@@ -17,12 +17,12 @@ def build_graph(rrd_file):
     srs = g.def_ds("srs", "brs")
     sws = g.def_ds("sws", "bws")
 
-    nbr = br * -1
-    nbw = bw * -1
-    snbrs = (brs * -1) / 2048 * 16
-    snbws = (bws * -1) / 2048 * 16
-    sars = ars / 2048 * 16
-    saws = aws / 2048 * 16
+    nbr = g.cdef("nbr", br * -1)
+    nbw = g.cdef("nbw", bw * -1)
+    snbrs = g.cdef("snbrs", (brs * -1) / 2048 * 16)
+    snbws = g.cdef("snbws", (bws * -1) / 2048 * 16)
+    sars = g.cdef("sars", ars / 2048 * 16)
+    saws = g.cdef("saws", aws / 2048 * 16)
     arkb = g.cdef("arkb", ars / 2)
     awkb = g.cdef("awkb", aws / 2)
     brkb = g.cdef("brkb", brs / 2)
