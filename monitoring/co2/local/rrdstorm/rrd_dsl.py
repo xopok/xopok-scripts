@@ -53,13 +53,15 @@ class GraphBuilder:
         return name
 
     def area(self, value: RPNValue, color: str, legend: str = "", stack: bool = False) -> None:
-        vname = self._resolve(value)
+        vname = str(value)
         stack_suffix = ":STACK" if stack else ""
-        self.args.append(f"AREA:{vname}#{color}:{legend}{stack_suffix}")
+        legend_suffix = f":{legend}" if legend else ":"
+        self.args.append(f"AREA:{vname}#{color}{legend_suffix}{stack_suffix}")
 
     def line(self, width: int, value: RPNValue, color: str, legend: str = "", extra: str = "") -> None:
         vname = self._resolve(value)
-        self.args.append(f"LINE{width}:{vname}#{color}:{legend}{extra}")
+        legend_suffix = f":{legend}" if legend else ":"
+        self.args.append(f"LINE{width}:{vname}#{color}{legend_suffix}{extra}")
 
     def gprint(self, value: RPNValue, fmt: str, cf: str = "") -> None:
         vname = self._resolve(value)
@@ -70,7 +72,8 @@ class GraphBuilder:
 
     def hrule(self, value: RPNValue, color: str, legend: str = "") -> None:
         vname = self._resolve(value)
-        self.args.append(f"HRULE:{vname}#{color}:{legend}")
+        legend_suffix = f":{legend}" if legend else ":"
+        self.args.append(f"HRULE:{vname}#{color}{legend_suffix}")
 
     def compile(self) -> list[str]:
         return self.args
