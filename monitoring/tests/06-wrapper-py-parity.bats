@@ -70,64 +70,38 @@ run_bash() {
     }
 }
 
-@test "wrapper.py and wrapper.sh produce identical graph_cron output (source 0)" {
-    rm -rf "${TEST_RRDOUTPUT:?}"/*
-    PY_OUTPUT=$(run_python graph_cron s 0)
-    SH_OUTPUT=$(run_bash graph_cron s 0)
+@test "wrapper.py and wrapper.sh produce identical graph_cron output for all indices" {
+    for i in {0..9}; do
+        rm -rf "${TEST_RRDOUTPUT:?}"/*
+        PY_OUTPUT=$(run_python graph_cron s "$i")
+        SH_OUTPUT=$(run_bash graph_cron s "$i")
 
-    [ "$PY_OUTPUT" = "$SH_OUTPUT" ] || {
-        echo "OUTPUTS DO NOT MATCH!"
-        echo "=== PYTHON ==="
-        echo "$PY_OUTPUT"
-        echo "=== BASH ==="
-        echo "$SH_OUTPUT"
-        false
-    }
+        [ "$PY_OUTPUT" = "$SH_OUTPUT" ] || {
+            echo "OUTPUTS DO NOT MATCH FOR INDEX $i!"
+            echo "=== PYTHON ==="
+            echo "$PY_OUTPUT"
+            echo "=== BASH ==="
+            echo "$SH_OUTPUT"
+            false
+        }
+    done
 }
 
-@test "wrapper.py and wrapper.sh produce identical graph_cron output (source 1)" {
-    rm -rf "${TEST_RRDOUTPUT:?}"/*
-    PY_OUTPUT=$(run_python graph_cron h 1)
-    SH_OUTPUT=$(run_bash graph_cron h 1)
+@test "wrapper.py and wrapper.sh produce identical graph output for all indices" {
+    for i in {0..9}; do
+        rm -rf "${TEST_RRDOUTPUT:?}"/*
+        PY_OUTPUT=$(run_python graph "$i")
+        SH_OUTPUT=$(run_bash graph "$i")
 
-    [ "$PY_OUTPUT" = "$SH_OUTPUT" ] || {
-        echo "OUTPUTS DO NOT MATCH!"
-        echo "=== PYTHON ==="
-        echo "$PY_OUTPUT"
-        echo "=== BASH ==="
-        echo "$SH_OUTPUT"
-        false
-    }
-}
-
-@test "wrapper.py and wrapper.sh produce identical graph_cron output (source 4)" {
-    rm -rf "${TEST_RRDOUTPUT:?}"/*
-    PY_OUTPUT=$(run_python graph_cron d 4)
-    SH_OUTPUT=$(run_bash graph_cron d 4)
-
-    [ "$PY_OUTPUT" = "$SH_OUTPUT" ] || {
-        echo "OUTPUTS DO NOT MATCH!"
-        echo "=== PYTHON ==="
-        echo "$PY_OUTPUT"
-        echo "=== BASH ==="
-        echo "$SH_OUTPUT"
-        false
-    }
-}
-
-@test "wrapper.py and wrapper.sh produce identical graph output (source 0)" {
-    rm -rf "${TEST_RRDOUTPUT:?}"/*
-    PY_OUTPUT=$(run_python graph 0)
-    SH_OUTPUT=$(run_bash graph 0)
-
-    [ "$PY_OUTPUT" = "$SH_OUTPUT" ] || {
-        echo "OUTPUTS DO NOT MATCH!"
-        echo "=== PYTHON ==="
-        echo "$PY_OUTPUT"
-        echo "=== BASH ==="
-        echo "$SH_OUTPUT"
-        false
-    }
+        [ "$PY_OUTPUT" = "$SH_OUTPUT" ] || {
+            echo "OUTPUTS DO NOT MATCH FOR INDEX $i!"
+            echo "=== PYTHON ==="
+            echo "$PY_OUTPUT"
+            echo "=== BASH ==="
+            echo "$SH_OUTPUT"
+            false
+        }
+    done
 }
 
 @test "wrapper.py handles invalid command like wrapper.sh" {

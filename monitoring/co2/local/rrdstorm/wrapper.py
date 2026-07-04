@@ -18,6 +18,7 @@ Usage:
 """
 
 import argparse
+import importlib.util
 import logging
 import os
 import re
@@ -214,21 +215,17 @@ class RRDStorm:
         if n_str not in self.RRDcFILE:
             return
         filebase = self.RRDcFILE[n_str].split(":")[0]
-        def_file = self.defsdir / f"{N}-{filebase}.sh"
+        def_file = self.defsdir / f"{N}-{filebase}.py"
 
         if not def_file.is_file():
             log.error("DEF file not found: %s", def_file)
             return
 
-        # Read DEF definitions
-        graph_args = []
-        with open(def_file) as f:
-            for line in f:
-                line = line.rstrip("\n")
-                if not line or line.startswith("#"):
-                    continue
-                line = line.replace("$RRD", str(rrdf))
-                graph_args.append(line)
+        # Load Python DEF definition
+        spec = importlib.util.spec_from_file_location(f"def_{N}", def_file)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        graph_args = mod.build_graph(rrdf)
 
         # Build extra args
         all_extra = []
