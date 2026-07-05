@@ -10,7 +10,7 @@ DEF:ds9=$RRD:auditfailed:AVERAGE
 DEF:dsd=$RRD:deleted:AVERAGE
 CDEF:ln1=ds2,ds2,UNKN,IF
 CDEF:ln2=ds3,ds2,ds3,+,UNKN,IF
-AREA:ds2#1598C3
+AREA:ds2#1598C3:
 AREA:ds3#CC7016::STACK
 LINE1:ln2#EC9D48
 LINE1:ln1#48C4EC
@@ -23,7 +23,7 @@ CDEF:naf=af,-1,*
 CDEF:lnd=d,nd,UNKN,IF
 CDEF:lndf=df,ndf,nd,+,UNKN,IF
 CDEF:lnaf=af,naf,ndf,nd,+,+,UNKN,IF
-AREA:nd#24BC14
+AREA:nd#24BC14:
 AREA:ndf#CC7016::STACK
 AREA:naf#CC3118::STACK
 LINE1:lndf#EC9D48

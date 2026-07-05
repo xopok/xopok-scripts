@@ -60,7 +60,7 @@ class GraphBuilder:
 
     def line(self, width: int, value: RPNValue, color: str, legend: str = "", extra: str = "") -> None:
         vname = self._resolve(value)
-        legend_suffix = f":{legend}" if legend else ":"
+        legend_suffix = f":{legend}" if legend else ""
         self.args.append(f"LINE{width}:{vname}#{color}{legend_suffix}{extra}")
 
     def gprint(self, value: RPNValue, fmt: str, cf: str = "") -> None:
@@ -72,7 +72,7 @@ class GraphBuilder:
 
     def hrule(self, value: RPNValue, color: str, legend: str = "") -> None:
         vname = self._resolve(value)
-        legend_suffix = f":{legend}" if legend else ":"
+        legend_suffix = f":{legend}" if legend else ""
         self.args.append(f"HRULE:{vname}#{color}{legend_suffix}")
 
     def compile(self) -> list[str]:

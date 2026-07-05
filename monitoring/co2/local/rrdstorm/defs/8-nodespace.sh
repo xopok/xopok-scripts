@@ -7,7 +7,7 @@ CDEF:nfree2=free2,-1,*,-1,MAX
 CDEF:lnfree0=free0,nfree0,UNKN,IF
 CDEF:lnfree1=free1,nfree1,nfree0,+,UNKN,IF
 CDEF:lnfree2=free2,nfree2,nfree1,nfree0,+,+,UNKN,IF
-AREA:nfree0#24BC14
+AREA:nfree0#24BC14:
 AREA:nfree1#CC7016::STACK
 AREA:nfree2#1598C3::STACK
 VDEF:tot0=nfree0,TOTAL

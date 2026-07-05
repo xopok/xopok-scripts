@@ -18,7 +18,7 @@ def build_graph(rrd_file):
     g.cdef("ln1", "ds2,ds2,UNKN,IF")
     g.cdef("ln2", "ds3,ds2,ds3,+,UNKN,IF")
 
-    g.args.append("AREA:ds2#1598C3")
+    g.area("ds2", "1598C3")
     g.area(ds3, "CC7016", "", stack=True)
     g.args.append("LINE1:ln2#EC9D48")
     g.args.append("LINE1:ln1#48C4EC")
@@ -34,7 +34,7 @@ def build_graph(rrd_file):
     g.cdef("lndf", "df,ndf,nd,+,UNKN,IF")
     g.cdef("lnaf", "af,naf,ndf,nd,+,+,UNKN,IF")
 
-    g.args.append("AREA:nd#24BC14")
+    g.area("nd", "24BC14")
     g.area("ndf", "CC7016", "", stack=True)
     g.area("naf", "CC3118", "", stack=True)
     g.args.append("LINE1:lndf#EC9D48")
